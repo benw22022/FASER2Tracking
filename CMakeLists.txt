@@ -13,12 +13,8 @@ find_package(ROOT CONFIG REQUIRED)
 find_package(Eigen3 CONFIG REQUIRED)
 find_package(Geant4 REQUIRED)
 find_package(ZLIB REQUIRED)
-message(STATUS "ZLIB_LIBRARIES: ${ZLIB_LIBRARIES}")
-message(STATUS "ZLIB_INCLUDE_DIRS: ${ZLIB_INCLUDE_DIRS}")
-
-file(GLOB sources ${PROJECT_SOURCE_DIR}/source/*.cpp)
-file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.h)
-
+find_package(Python 3.8 REQUIRED COMPONENTS Interpreter Development)
+add_subdirectory(pybind11)
 
 # if you want to try an alternate Acts, you can
 # 1. comment out the stuff here and replace with add_subdirectory(acts)
@@ -34,24 +30,25 @@ if (NOT Acts_FOUND)
   )
   FetchContent_MakeAvailable(Acts)
   FetchContent_GetProperties(Acts)
-  # Adding Acts as "SYSTEM" 
-  # which will silence compiler warnings from these 3rd party softwares
   include_directories(SYSTEM "${Acts_SOURCE_DIR}/Core/include")
 else()
   message(STATUS "Found Acts ${Acts_VERSION}")
 endif()
 
 
-add_library(Tracking SHARED ${sources})
-target_include_directories(Tracking PUBLIC ${include})
-include_directories(${ROOT_INCLUDE_DIRS} ${Geant4_INCLUDE_DIRS} ${ZLIB_INCLUDE_DIRS})
+file(GLOB SOURCE_FILES ${PROJECT_SOURCE_DIR}/source/*.cpp)
+file(GLOB HEADER_FILES ${PROJECT_SOURCE_DIR}/include/*.h)
+file(GLOB PYTHON_FILES ${PROJECT_SOURCE_DIR}/python/*.h, ${PROJECT_SOURCE_DIR}/python/*.cpp)
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCE_FILES} ${HEADER_FILES} ${PYTHON_FILES} )
+
+# include(pybind11.cmake)
+
+pybind11_add_module(Tracking 
+	${SOURCE_FILES}
+	${HEADER_FILES}
+	${PYTHON_FILES}
+)
+
+target_include_directories(Tracking PUBLIC ${ROOT_INCLUDE_DIRS} ${Geant4_INCLUDE_DIRS} ${ZLIB_INCLUDE_DIRS})
 target_compile_definitions(Tracking PUBLIC ${Geant4_DEFINITIONS})
-
-target_link_libraries(Tracking PUBLIC ActsCore ${ROOT_LIBRARIES} ${Geant4_LIBRARIES} ${ZLIB_LIBRARIES})
-
-
-# target_link_libraries(Tracking PUBLIC ${ZLIB_LIBRARIES})
-
-
-
-# setup_python(package_name FASER2/Tracking)
+target_link_libraries(Tracking PUBLIC ActsCore ${ROOT_LIBRARIES} ${Geant4_LIBRARIES})
