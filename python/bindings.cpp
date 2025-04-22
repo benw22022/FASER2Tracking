@@ -1,5 +1,6 @@
 #include <pybind11/pybind11.h>
 #include "../include/MyClass.h"
+#include "../include/FASER2Geometry.h"
 
 namespace py = pybind11;
 
@@ -10,4 +11,7 @@ PYBIND11_MODULE(Tracking, m) {
         .def(py::init())
         .def(py::init<const std::string&>())
         .def("GetName", &MyClass::GetName);
+
+    py::class_<FASER2Geometry>(m, "FASER2Geometry")
+        .def(py::init<const std::string&>());
 }
