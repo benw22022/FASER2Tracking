@@ -1,5 +1,22 @@
 #include "../include/FASER2Geometry.h"
 #include "../include/SilentG4.h"
+#include "Acts/Utilities/Logger.hpp"
+
+
+// #include "ActsExamples/Geant4Detector/Geant4Detector.hpp"
+
+#include "Acts/Geometry/CylinderVolumeHelper.hpp"
+#include "Acts/Geometry/KDTreeTrackingGeometryBuilder.hpp"
+#include "Acts/Geometry/LayerArrayCreator.hpp"
+#include "Acts/Geometry/LayerCreator.hpp"
+#include "Acts/Geometry/SurfaceArrayCreator.hpp"
+#include "Acts/Geometry/TrackingGeometry.hpp"
+#include "Acts/Geometry/TrackingVolumeArrayCreator.hpp"
+#include "Acts/Plugins/Geant4/Geant4DetectorElement.hpp"
+#include "Acts/Surfaces/Surface.hpp"
+#include "G4Transform3D.hh"
+#include "G4VPhysicalVolume.hh"
+
 
 
 /**
@@ -91,11 +108,99 @@ G4VPhysicalVolume* FASER2Geometry::findDaughterByName(G4VPhysicalVolume* pvol, G
 }
 
 void FASER2Geometry::createGeometry() {
-    // Create the geometry
-    Acts::CuboidVolumeBuilder volumeBuilder;
-    Acts::TrackingGeometryBuilder builder(volumeBuilder);
-    m_trackingGeometry = builder.build(m_worldPhysVol, m_trackingPhysVolumes);
     
     // Set the geometry context
-    m_nominalGeometryContext = Acts::GeometryContext();
+    m_geometryContext = Acts::GeometryContext();
+
+    auto [surfaces, elements] = buildGeant4Volumes();
+
+    // Surface array creator
+    auto surfaceArrayCreator = std::make_shared<const Acts::SurfaceArrayCreator>(
+        Acts::SurfaceArrayCreator::Config(),
+        logger().clone("SurfaceArrayCreator"));
+    // Layer Creator
+    Acts::LayerCreator::Config lcConfig;
+    lcConfig.surfaceArrayCreator = surfaceArrayCreator;
+    auto layerCreator = std::make_shared<Acts::LayerCreator>(
+        lcConfig, logger().clone("LayerCreator"));
+    // Layer array creator
+    Acts::LayerArrayCreator::Config lacConfig;
+    auto layerArrayCreator = std::make_shared<const Acts::LayerArrayCreator>(
+        lacConfig, logger().clone("LayerArrayCreator"));
+    // Tracking volume array creator
+    Acts::TrackingVolumeArrayCreator::Config tvacConfig;
+    auto tVolumeArrayCreator =
+        std::make_shared<const Acts::TrackingVolumeArrayCreator>(
+            tvacConfig, logger().clone("TrackingVolumeArrayCreator"));
+    // configure the cylinder volume helper
+    Acts::CylinderVolumeHelper::Config cvhConfig;
+    cvhConfig.layerArrayCreator = layerArrayCreator;
+    cvhConfig.trackingVolumeArrayCreator = tVolumeArrayCreator;
+    auto cylinderVolumeHelper =
+        std::make_shared<const Acts::CylinderVolumeHelper>(
+            cvhConfig, logger().clone("CylinderVolumeHelper"));
+
+    // Configure the tracking geometry builder, copy the surfaces in
+    Acts::KDTreeTrackingGeometryBuilder::Config kdtCfg;
+    kdtCfg.surfaces = surfaces;
+    kdtCfg.layerCreator = layerCreator;
+    kdtCfg.trackingVolumeHelper = cylinderVolumeHelper;
+    // kdtCfg.protoDetector = m_cfg.protoDetector;
+    // kdtCfg.geometryIdentifierHook = m_cfg.geometryIdentifierHook;
+
+    // The KDT tracking geometry builder
+    auto kdtBuilder = Acts::KDTreeTrackingGeometryBuilder(
+        kdtCfg, logger().clone("KDTreeTrackingGeometryBuilder"));
+
+    m_trackingGeometry = kdtBuilder.trackingGeometry(m_geometryContext);
+
+}
+
+
+std::tuple<std::vector<std::shared_ptr<Acts::Surface>>, std::vector<std::shared_ptr<Acts::Geant4DetectorElement>>> FASER2Geometry::buildGeant4Volumes() {
+    
+    // Generate the surface cache
+    Acts::Geant4DetectorSurfaceFactory::Cache g4SurfaceCache;
+    G4Transform3D g4ToWorld;
+    Acts::Geant4DetectorSurfaceFactory::Options g4SurfaceOptions;
+    g4SurfaceOptions.sensitiveSurfaceSelector =
+        std::make_shared<Acts::Geant4PhysicalVolumeSelectors::NameSelector>(
+            std::vector<std::string>{"F2UpstreamTrackerLayer_1", "F2UpstreamTrackerLayer_2", "F2UpstreamTrackerLayer_3",
+                                      "F2DownstreamTrackerLayer_1", "F2DownstreamTrackerLayer_2", "F2DownstreamTrackerLayer_3"},
+            false);
+
+    g4SurfaceOptions.passiveSurfaceSelector = 
+        std::make_shared<Acts::Geant4PhysicalVolumeSelectors::NameSelector>(
+            std::vector<std::string>{"Magnet", "DecayVol"},
+            false);
+
+    Acts::Geant4DetectorSurfaceFactory{}.construct(g4SurfaceCache, g4ToWorld, *m_FASER2PhysVol, g4SurfaceOptions);
+
+    std::cout << "Found " << g4SurfaceCache.matchedG4Volumes
+    << " matching  Geant4 Physical volumes." << std::endl;
+    std::cout << "Found " << g4SurfaceCache.sensitiveSurfaces.size()
+    << " converted sensitive Geant4 Physical volumes." << std::endl;
+    std::cout << "Found " << g4SurfaceCache.passiveSurfaces.size()
+    << " converted passive Geant4 Physical volumes." << std::endl;
+    std::cout << "Found " << g4SurfaceCache.convertedMaterials
+    << " converted Geant4 Material slabs." << std::endl;
+
+    std::vector<std::shared_ptr<Acts::Surface>> surfaces;
+    std::vector<std::shared_ptr<Acts::Geant4DetectorElement>> elements;
+
+    // Reserve the right amount of surfaces
+    surfaces.reserve(g4SurfaceCache.sensitiveSurfaces.size() +
+    g4SurfaceCache.passiveSurfaces.size());
+    elements.reserve(g4SurfaceCache.sensitiveSurfaces.size());
+
+    // Add the sensitive surfaces
+    for (const auto& [e, s] : g4SurfaceCache.sensitiveSurfaces) {
+    surfaces.push_back(s);
+    elements.push_back(e);
+    }
+    // Add the passive surfaces
+    surfaces.insert(surfaces.end(), g4SurfaceCache.passiveSurfaces.begin(),
+    g4SurfaceCache.passiveSurfaces.end());
+
+    return {std::move(surfaces), std::move(elements)};
 }

@@ -16,6 +16,22 @@
 #include "Acts/Material/HomogeneousVolumeMaterial.hpp"
 #include "Acts/Geometry/GeometryContext.hpp"
 
+#include "Acts/Geometry/CylinderVolumeHelper.hpp"
+#include "Acts/Geometry/KDTreeTrackingGeometryBuilder.hpp"
+#include "Acts/Geometry/LayerArrayCreator.hpp"
+#include "Acts/Geometry/LayerCreator.hpp"
+#include "Acts/Geometry/SurfaceArrayCreator.hpp"
+#include "Acts/Geometry/TrackingGeometry.hpp"
+#include "Acts/Geometry/TrackingVolumeArrayCreator.hpp"
+#include "Acts/Plugins/Geant4/Geant4DetectorElement.hpp"
+#include "Acts/Surfaces/Surface.hpp"
+#include "Acts/Plugins/Geant4/Geant4DetectorSurfaceFactory.hpp"
+
+
+#include <memory>
+#include <ostream>
+#include <stdexcept>
+
 
 // Visualization
 #include <Acts/Visualization/GeometryView3D.hpp>
@@ -55,6 +71,13 @@ class FASER2Geometry {
         Acts::GeometryContext m_geometryContext;
 
         void createGeometry();
+        std::tuple<std::vector<std::shared_ptr<Acts::Surface>>, std::vector<std::shared_ptr<Acts::Geant4DetectorElement>>> buildGeant4Volumes();
+
+        std::unique_ptr<const Acts::Logger> m_logger = Acts::getDefaultLogger("Geant4Detector", Acts::Logging::INFO);
+        const Acts::Logger& logger() const
+        {
+            return *m_logger;
+        }
 
 
 };
