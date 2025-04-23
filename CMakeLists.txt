@@ -30,11 +30,18 @@ add_subdirectory(pybind11)
 include(FetchContent)
 FetchContent_Declare(
     Acts
-    URL https://github.com/acts-project/acts/archive/refs/tags/v36.0.0.tar.gz
+    URL https://github.com/acts-project/acts/archive/refs/tags/v41.0.0.tar.gz
     URL_HASH MD5=f543dd8ba030bea2e4ee2f1b07dbe7c0
     DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 )
+set(ACTS_BUILD_PLUGIN_GEANT4 ON)
+set(ACTS_BUILD_PLUGIN_ROOT ON)
+set(ACTS_BUILD_PLUGIN_ACTSVG ON)
+set(ACTS_BUILD_FATRAS_GEANT4 ON)
+set(ACTS_BUILD_FATRAS ON)
+set(ACTS_BUILD_FATRAS_ROOT ON)
 set(ACTS_BUILD_EXAMPLES_PYTHON_BINDINGS ON)
+set(ACTS_BUILD_EXAMPLES_GEANT4 ON)
 FetchContent_MakeAvailable(Acts)
 FetchContent_GetProperties(Acts)
 include_directories(SYSTEM "${Acts_SOURCE_DIR}/Core/include")
