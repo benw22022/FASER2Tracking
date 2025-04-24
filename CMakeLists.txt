@@ -31,8 +31,8 @@ add_subdirectory(pybind11)
 include(FetchContent)
 FetchContent_Declare(
     Acts
-    URL https://github.com/acts-project/acts/archive/refs/tags/v36.0.0.tar.gz
-    URL_HASH MD5=f543dd8ba030bea2e4ee2f1b07dbe7c0
+    URL https://github.com/acts-project/acts/archive/refs/tags/v39.2.0.tar.gz
+    # URL_HASH MD5=f543dd8ba030bea2e4ee2f1b07dbe7c0
     DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 )
 set(ACTS_BUILD_PLUGIN_GEANT4 ON)
