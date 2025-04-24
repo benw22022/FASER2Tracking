@@ -60,6 +60,11 @@ class FASER2Geometry {
 
         G4VPhysicalVolume* findDaughterByName(G4VPhysicalVolume* pvol, G4String name);
 
+        std::shared_ptr<const Acts::TrackingGeometry> getTrackingGeometry() const
+        {
+            return m_trackingGeometry;
+        }
+
     private:
         std::string m_gdmlFile;
         G4VPhysicalVolume* m_worldPhysVol{nullptr};
@@ -78,6 +83,8 @@ class FASER2Geometry {
         {
             return *m_logger;
         }
+
+        
 
 
 };

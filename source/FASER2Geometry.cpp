@@ -153,7 +153,6 @@ void FASER2Geometry::createGeometry() {
         kdtCfg, logger().clone("KDTreeTrackingGeometryBuilder"));
 
     m_trackingGeometry = kdtBuilder.trackingGeometry(m_geometryContext);
-
 }
 
 
@@ -198,6 +197,10 @@ std::tuple<std::vector<std::shared_ptr<Acts::Surface>>, std::vector<std::shared_
     surfaces.push_back(s);
     elements.push_back(e);
     }
+
+    // Visit the surfaces to build geoIDmap
+    // m_trackingGeometry->visitSurfaces(surfaces);
+
     // Add the passive surfaces
     surfaces.insert(surfaces.end(), g4SurfaceCache.passiveSurfaces.begin(),
     g4SurfaceCache.passiveSurfaces.end());
