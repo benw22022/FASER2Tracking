@@ -19,6 +19,46 @@
 
 
 
+#include "Acts/Geometry/GeometryIdentifier.hpp"
+
+class CustomGeometryIdentifierHook : public Acts::GeometryIdentifierHook {
+public:
+    // Constructor, if you want to pass configuration or parameters
+    CustomGeometryIdentifierHook(int layerOffset, int moduleOffset)
+        : m_layerOffset(layerOffset), m_moduleOffset(moduleOffset) {}
+
+    static int layer_num = 0;
+
+    Acts::GeometryIdentifier decorateIdentifier(Acts::GeometryIdentifier identifier, const Acts::Surface& surface) const override {
+        // Define custom rules for decorating the GeometryID
+        int layerId = identifier.layer() + m_layerOffset;
+        int moduleId = layerId; //identifier.module() + m_moduleOffset;
+        
+        Acts::GeometryIdentifier id(layer_num);
+        layer_num++;
+
+        // Combine layer and module IDs into the GeometryID
+        // return Acts::GeometryIdentifier(identifier.volume(), layerId, moduleId, identifier.subID());
+        return id;
+    }
+
+    // // Override the identifier method
+    // Acts::GeometryID identifier(const Acts::Surface& surface, const Acts::Layer& layer,
+    //                              const Acts::TrackingVolume& volume) const override {
+    //     // Define custom rules for generating the GeometryID
+    //     int layerId = layer.layerIndex() + m_layerOffset;
+    //     int moduleId = surface.name().empty() ? 0 : std::stoi(surface.name());
+    //     int volumeId = volume.volumeID();
+
+    //     // Combine layer, module, and volume IDs into the GeometryID
+    //     return Acts::GeometryID(volumeId, layerId, moduleId, 0); // Last digit is surface sub-ID
+    // }
+
+private:
+    int m_layerOffset;  // Offset to layer ID, for customization
+    int m_moduleOffset; // Offset to module ID
+};
+
 /**
  * @brief Construct a new FASER2Geometry::FASER2Geometry object
  * copied from https://github.com/LDMX-Software/ldmx-sw/blob/trunk/Tracking/src/Tracking/geo/TrackingGeometry.cxx
@@ -145,6 +185,9 @@ void FASER2Geometry::createGeometry() {
     kdtCfg.surfaces = surfaces;
     kdtCfg.layerCreator = layerCreator;
     kdtCfg.trackingVolumeHelper = cylinderVolumeHelper;
+    Acts::ProtoDetector protoDetector = Acts::ProtoDetector();
+    protoDetector.name = "FASER2";
+    std::shared_ptr<const Acts::GeometryIdentifierHook> geometryIdentifierHook = std::make_shared<CustomGeometryIdentifierHook>(0,0);
     // kdtCfg.protoDetector = m_cfg.protoDetector;
     // kdtCfg.geometryIdentifierHook = m_cfg.geometryIdentifierHook;
 
@@ -153,6 +196,7 @@ void FASER2Geometry::createGeometry() {
         kdtCfg, logger().clone("KDTreeTrackingGeometryBuilder"));
 
     m_trackingGeometry = kdtBuilder.trackingGeometry(m_geometryContext);
+    
 }
 
 
@@ -193,9 +237,12 @@ std::tuple<std::vector<std::shared_ptr<Acts::Surface>>, std::vector<std::shared_
     elements.reserve(g4SurfaceCache.sensitiveSurfaces.size());
 
     // Add the sensitive surfaces
+    unsigned int sensitiveID = 0;
     for (const auto& [e, s] : g4SurfaceCache.sensitiveSurfaces) {
     surfaces.push_back(s);
     elements.push_back(e);
+    m_surfacesById[sensitiveID] = s;
+    sensitiveID++;
     }
 
     // Visit the surfaces to build geoIDmap

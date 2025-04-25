@@ -26,7 +26,7 @@
 #include "Acts/Plugins/Geant4/Geant4DetectorElement.hpp"
 #include "Acts/Surfaces/Surface.hpp"
 #include "Acts/Plugins/Geant4/Geant4DetectorSurfaceFactory.hpp"
-
+#include "Acts/Geometry/GeometryIdentifier.hpp"
 
 #include <memory>
 #include <ostream>
@@ -70,6 +70,8 @@ class FASER2Geometry {
         G4VPhysicalVolume* m_worldPhysVol{nullptr};
         G4VPhysicalVolume* m_hallPhysVol{nullptr};
         G4VPhysicalVolume* m_FASER2PhysVol{nullptr};
+
+        std::unordered_map<Acts::GeometryIdentifier, const Acts::Surface*> m_surfacesById;
 
         std::vector<G4VPhysicalVolume*> m_trackingPhysVolumes;
         std::shared_ptr<const Acts::TrackingGeometry> m_trackingGeometry{nullptr};
