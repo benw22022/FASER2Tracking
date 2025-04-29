@@ -27,6 +27,7 @@
 #include "Acts/Surfaces/Surface.hpp"
 #include "Acts/Plugins/Geant4/Geant4DetectorSurfaceFactory.hpp"
 #include "Acts/Geometry/GeometryIdentifier.hpp"
+#include "Acts/Geometry/TrackingGeometryVisitor.hpp"
 
 #include <memory>
 #include <ostream>
@@ -65,6 +66,8 @@ class FASER2Geometry {
             return m_trackingGeometry;
         }
 
+        Acts::Transform3 getTrackerTransform(const Acts::Transform3& trans) const;
+
     private:
         std::string m_gdmlFile;
         G4VPhysicalVolume* m_worldPhysVol{nullptr};
@@ -76,6 +79,7 @@ class FASER2Geometry {
         std::vector<G4VPhysicalVolume*> m_trackingPhysVolumes;
         std::shared_ptr<const Acts::TrackingGeometry> m_trackingGeometry{nullptr};
         Acts::GeometryContext m_geometryContext;
+        // Acts::GeometryIdMapVisitor m_mapVisitor;
 
         void createGeometry();
         std::tuple<std::vector<std::shared_ptr<Acts::Surface>>, std::vector<std::shared_ptr<Acts::Geant4DetectorElement>>> buildGeant4Volumes();
