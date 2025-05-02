@@ -168,7 +168,7 @@ void FASER2Geometry::createGeometry() {
       std::cout << "Pushing layer " << i << " to layer vector" << std::endl;
     }
 
-    auto length = positions.back() - positions.front();
+    auto length = abs(positions.back() - positions.front()) + 10._m;
     std::unique_ptr<const Acts::LayerArray> layArr(layArrCreator.layerArray(
         m_geometryContext, layVec, positions.front() - 2._mm, positions.back() + 2._mm,
         Acts::BinningType::arbitrary, binValue)); // The binValue tells the LayerArray in which direction to bin the layers - This will orient the detector in the correct direction (i.e. the Y axis)
@@ -176,7 +176,7 @@ void FASER2Geometry::createGeometry() {
     // This is the bounding box for the detector - the functions like the world volume in Geant4
     std::shared_ptr<Acts::VolumeBounds> boundsVol = std::make_shared<Acts::CuboidVolumeBounds>(FASER2BoundingBox->GetXHalfLength()*2 + 5._mm, FASER2BoundingBox->GetYHalfLength()*2 + 5._mm, length + 10._mm);
     
-    Acts::Translation3 transVol(offsets[0], offsets[1], FASER2BoundingBox->GetZHalfLength());
+    Acts::Translation3 transVol(offsets[0], offsets[1], (positions.front() + positions.back()) * 0.5);
     Acts::Transform3 trafoVol(rotation * transVol);
     
     // Create the tracking volume and the tracking geometry
@@ -205,7 +205,9 @@ std::tuple<std::vector<std::shared_ptr<Acts::Surface>>, std::vector<std::shared_
     // rot.rotateY(M_PI / 2);  // Rotates around Y to shift Z → X
 
     G4Box* FASER2BoundingBox = dynamic_cast<G4Box*>(m_FASER2PhysVol->GetLogicalVolume()->GetSolid());
-    G4ThreeVector translation(1440, 2210, 0);    //TODO: Don't hardcode this!
+    auto physvolTrans = m_FASER2PhysVol->GetTranslation();
+    std::cout << "FASER2PhysVol initial position: " << physvolTrans.x() << " " << physvolTrans.y() << " " << physvolTrans.z() << std::endl;
+    G4ThreeVector translation(-physvolTrans.x(), -physvolTrans.y(), -physvolTrans.z());    //TODO: Don't hardcode this!
     // G4Transform3D g4ToWorld;
     G4Transform3D g4ToWorld(rot, translation);  // This will translate the detector phys volume to x=0, y=0. This will make placing the surfaces easier
 

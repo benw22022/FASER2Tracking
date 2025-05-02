@@ -86,7 +86,7 @@ def runTruthTrackingKalman(
             MomentumConfig(1.0 * u.GeV, 100.0 * u.GeV, transverse=True),
             PhiConfig(90 * u.degree, 90 * u.degree), # Fire the muons straight along the y axis
             vtxGen=acts.examples.GaussianVertexGenerator(
-                mean=acts.Vector4(0, 9400, 0, 0),
+                mean=acts.Vector4(0, -4010, 0, 0),
                 stddev=acts.Vector4(0, 0, 0, 0),
             ),
             multiplicity=1,
