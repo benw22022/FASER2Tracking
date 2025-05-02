@@ -29,6 +29,24 @@ cd build
 python FASER2Tracking/python/faser2_truth_tracking.py
 ```
 
+## Visualising the geometry
+
+To export the geometry into a format which can be visualised run the `python/geometry.py` script.
+
+This will produce a directory called `obj` which contains `.obj` files.
+
+These files can be visualised using the [`meshlab`](https://www.meshlab.net/#download) tool.
+On Linux you can install `meshlab` via the command line:
+
+```bash
+sudo apt update
+sudo apt install meshlab
+```
+
+You can then simply type `meshlab` in your terminal to start the application. The next step is to load the `.obj` files by going to `file -> Import Mesh` (or use `ctrl + I`) and then selecting the `.obj` file(s) you wish to load. There should be a file for each sensitive and passive surface.
+
+If you find a layer missing unexpectedly, double-check your geometry. It could be that your bounding volume is too small.
+
 ## Known issues
 
 There is an issue with the tracking when firing particles with very small $\eta$. When this happens you might end up with the following warning:
