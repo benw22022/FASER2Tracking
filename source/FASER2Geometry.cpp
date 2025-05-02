@@ -93,10 +93,10 @@ void FASER2Geometry::createGeometry() {
     auto FASER2ActsMaterial = Acts::Geant4MaterialConverter{}.material(*FASER2G4Material, 1);
 
     auto [surfaces, elements] = buildGeant4Volumes();
-    unsigned int surface_idx{0};
 
     std::size_t nLayers = surfaces.size();
     std::vector<Acts::LayerPtr> layers(nLayers);
+    std::cout << "Found " << nLayers << " layers." << std::endl;
 
     auto binValue = Acts::AxisDirection::AxisY; //? Make this configurable?
     Acts::RotationMatrix3 rotation = Acts::RotationMatrix3::Identity();
@@ -113,15 +113,18 @@ void FASER2Geometry::createGeometry() {
     std::vector<Acts::Vector3> surfaces_positions;
     std::vector<double> offsets{0,0};
     // std::vector<double> positions{9428.5, 9938.5, 10448.5, 10958.5, 11468.5, 11978.5};
+    std::vector<double> positions{};
 
     // Loop over the surfaces we extracted from GEANT4 
     //! For some reason we **cannot** use these surfaces directly - they don't register hits (despite having and assocaiated detector element)
     //! So we need to create new surfaces from the GEANT4 surfaces
+    unsigned int surface_idx{0};
     for (auto surface_cpy : surfaces) {
 
         const auto pBounds = std::make_shared<const Acts::RectangleBounds>(1500, 500); //! TODO Don't hardcode this!
         Acts::Vector3 surface_position = surface_cpy->center(m_geometryContext);
         Acts::Translation3 trans(offsets[0], offsets[1], surface_position.z());
+        positions.push_back(surface_position.z());
         // Acts::Translation3 trans(offsets[0], offsets[1], positions[surface_idx]);
         Acts::Transform3 trafo(rotation * trans); // This transform will be used to place the surface in the correct position and orientation
 
@@ -162,14 +165,16 @@ void FASER2Geometry::createGeometry() {
     for (unsigned int i = 0; i < nLayers; i++) 
     {
       layVec.push_back(layers[i]);
+      std::cout << "Pushing layer " << i << " to layer vector" << std::endl;
     }
 
+    auto length = positions.back() - positions.front();
     std::unique_ptr<const Acts::LayerArray> layArr(layArrCreator.layerArray(
-        m_geometryContext, layVec, -FASER2BoundingBox->GetZHalfLength()*1.01,FASER2BoundingBox->GetZHalfLength()*1.01,
+        m_geometryContext, layVec, positions.front() - 2._mm, positions.back() + 2._mm,
         Acts::BinningType::arbitrary, binValue)); // The binValue tells the LayerArray in which direction to bin the layers - This will orient the detector in the correct direction (i.e. the Y axis)
     
     // This is the bounding box for the detector - the functions like the world volume in Geant4
-    std::shared_ptr<Acts::VolumeBounds> boundsVol = std::make_shared<Acts::CuboidVolumeBounds>(FASER2BoundingBox->GetXHalfLength()*1.01, FASER2BoundingBox->GetYHalfLength()*1.01, FASER2BoundingBox->GetZHalfLength()*1.01);
+    std::shared_ptr<Acts::VolumeBounds> boundsVol = std::make_shared<Acts::CuboidVolumeBounds>(FASER2BoundingBox->GetXHalfLength()*2 + 5._mm, FASER2BoundingBox->GetYHalfLength()*2 + 5._mm, length + 10._mm);
     
     Acts::Translation3 transVol(offsets[0], offsets[1], FASER2BoundingBox->GetZHalfLength());
     Acts::Transform3 trafoVol(rotation * transVol);
