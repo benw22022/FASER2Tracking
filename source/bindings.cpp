@@ -1,5 +1,4 @@
 #include <pybind11/pybind11.h>
-#include "../include/MyClass.h"
 #include "../include/FASER2Geometry.h"
 
 namespace py = pybind11;

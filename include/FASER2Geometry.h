@@ -57,8 +57,6 @@ class FASER2Geometry {
     public:
         FASER2Geometry(const std::string& gdmlFile);
 
-        // std::shared_ptr<const Acts::TrackingGeometry> createGeometry();
-
         G4VPhysicalVolume* findDaughterByName(G4VPhysicalVolume* pvol, G4String name);
 
         std::shared_ptr<const Acts::TrackingGeometry> getTrackingGeometry() const
@@ -66,20 +64,16 @@ class FASER2Geometry {
             return m_trackingGeometry;
         }
 
-        Acts::Transform3 getTrackerTransform(const Acts::Transform3& trans) const;
 
     private:
         std::string m_gdmlFile;
         G4VPhysicalVolume* m_worldPhysVol{nullptr};
         G4VPhysicalVolume* m_hallPhysVol{nullptr};
         G4VPhysicalVolume* m_FASER2PhysVol{nullptr};
-
-        std::unordered_map<Acts::GeometryIdentifier, const Acts::Surface*> m_surfacesById;
-
-        std::vector<G4VPhysicalVolume*> m_trackingPhysVolumes;
+        
+        std::vector<std::shared_ptr<const Acts::DetectorElementBase>> m_detectorStore;
         std::shared_ptr<const Acts::TrackingGeometry> m_trackingGeometry{nullptr};
         Acts::GeometryContext m_geometryContext;
-        // Acts::GeometryIdMapVisitor m_mapVisitor;
 
         void createGeometry();
         std::tuple<std::vector<std::shared_ptr<Acts::Surface>>, std::vector<std::shared_ptr<Acts::Geant4DetectorElement>>> buildGeant4Volumes();
@@ -89,8 +83,6 @@ class FASER2Geometry {
         {
             return *m_logger;
         }
-
-        
 
 
 };
