@@ -2,9 +2,11 @@
 
 ## Getting started
 
-Work in progress implementation of ACTS - code probably doesn't work! Expect *extremely* janky code
+Work in progress implementation of ACTS for FASER2 - Expect *extremely* janky code
 
 Code provides a python binding of the FASER2 geometry using a GDML file from GEANT4
+
+Code should work on any el9 machine (or in case you want to run this on your laptop, a docker container. A repo for this can be found here [`el9-cvmfs-docker`](https://github.com/benw22022/el9-cvmfs-docker))
 
 To compile the FASER2 geometry do:
 
