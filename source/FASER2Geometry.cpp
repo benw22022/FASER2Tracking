@@ -15,6 +15,10 @@
 #include "Acts/Plugins/Geant4/Geant4DetectorElement.hpp"
 #include "Acts/Geometry/GeometryIdentifier.hpp"
 #include "Acts/Surfaces/Surface.hpp"
+#include <Acts/MagneticField/MultiRangeBField.hpp>
+#include <Acts/MagneticField/ConstantBField.hpp>
+#include "Acts/Utilities/RangeXD.hpp"
+
 
 // Geant4
 #include "G4Transform3D.hh"
@@ -27,6 +31,7 @@
 
 #include "../include/FASER2Geometry.h"
 #include "../include/TelescopeDetectorElement.h"
+#include "../include/RestrictedBField.h"
 
 
 
@@ -65,7 +70,7 @@ FASER2Geometry::FASER2Geometry(const std::string& gdmlFile) :
     createGeometry();
 }
 
-G4VPhysicalVolume* FASER2Geometry::findDaughterByName(G4VPhysicalVolume* pvol, G4String name) {
+G4VPhysicalVolume* FASER2Geometry::findDaughterByName(G4VPhysicalVolume* pvol, G4String name) const {
     G4LogicalVolume* lvol = pvol->GetLogicalVolume();
     // std::cout << "lvol->GetNoDaughters() = " << lvol->GetNoDaughters() << std::endl;
     for (G4int i = 0; i < lvol->GetNoDaughters(); i++) 
@@ -207,9 +212,9 @@ std::tuple<std::vector<std::shared_ptr<Acts::Surface>>, std::vector<std::shared_
     G4Box* FASER2BoundingBox = dynamic_cast<G4Box*>(m_FASER2PhysVol->GetLogicalVolume()->GetSolid());
     auto physvolTrans = m_FASER2PhysVol->GetTranslation();
     std::cout << "FASER2PhysVol initial position: " << physvolTrans.x() << " " << physvolTrans.y() << " " << physvolTrans.z() << std::endl;
-    G4ThreeVector translation(-physvolTrans.x(), -physvolTrans.y(), -physvolTrans.z());    //TODO: Don't hardcode this!
-    // G4Transform3D g4ToWorld;
-    G4Transform3D g4ToWorld(rot, translation);  // This will translate the detector phys volume to x=0, y=0. This will make placing the surfaces easier
+    G4ThreeVector translation(-physvolTrans.x(), -physvolTrans.y(), -physvolTrans.z());
+    // G4Transform3D m_g4ToWorldTransform;
+    G4Transform3D m_g4ToWorldTransform(rot, translation);  // This will translate the detector phys volume to x=0, y=0. This will make placing the surfaces easier
 
     Acts::Geant4DetectorSurfaceFactory::Options g4SurfaceOptions;
     g4SurfaceOptions.sensitiveSurfaceSelector =
@@ -224,7 +229,7 @@ std::tuple<std::vector<std::shared_ptr<Acts::Surface>>, std::vector<std::shared_
             false);
     
     g4SurfaceOptions.convertMaterial = true;
-    Acts::Geant4DetectorSurfaceFactory{}.construct(g4SurfaceCache, g4ToWorld, *m_FASER2PhysVol, g4SurfaceOptions);
+    Acts::Geant4DetectorSurfaceFactory{}.construct(g4SurfaceCache, m_g4ToWorldTransform, *m_FASER2PhysVol, g4SurfaceOptions);
 
     std::cout << "Found " << g4SurfaceCache.matchedG4Volumes
     << " matching  Geant4 Physical volumes." << std::endl;
@@ -236,11 +241,12 @@ std::tuple<std::vector<std::shared_ptr<Acts::Surface>>, std::vector<std::shared_
     << " converted Geant4 Material slabs." << std::endl;
 
     std::vector<std::shared_ptr<Acts::Surface>> surfaces;
+    std::vector<std::shared_ptr<Acts::Surface>> passive_surfaces;
     std::vector<std::shared_ptr<Acts::Geant4DetectorElement>> elements;
 
     // Reserve the right amount of surfaces
-    surfaces.reserve(g4SurfaceCache.sensitiveSurfaces.size() +
-    g4SurfaceCache.passiveSurfaces.size());
+    surfaces.reserve(g4SurfaceCache.sensitiveSurfaces.size());
+    passive_surfaces.reserve(g4SurfaceCache.passiveSurfaces.size());
     elements.reserve(g4SurfaceCache.sensitiveSurfaces.size());
 
     // Add the sensitive surfaces
@@ -264,13 +270,85 @@ std::tuple<std::vector<std::shared_ptr<Acts::Surface>>, std::vector<std::shared_
         }
 
     }
-
-    // Visit the surfaces to build geoIDmap
-    // m_trackingGeometry->visitSurfaces(surfaces);
+    
+    for (auto& s : g4SurfaceCache.passiveSurfaces) {
+        passive_surfaces.push_back(s);
+        std::cout << "Passive surface: " << s->name()<< std::endl;
+    }
 
     // Add the passive surfaces
     // surfaces.insert(surfaces.end(), g4SurfaceCache.passiveSurfaces.begin(),
     // g4SurfaceCache.passiveSurfaces.end());
 
     return {std::move(surfaces), std::move(elements)};
+}
+
+
+std::shared_ptr<const Acts::MagneticFieldProvider> FASER2Geometry::createMagneticField(const Acts::Vector3& magField) {
+    
+    // Get the magnetic field from the GDML file
+    G4VPhysicalVolume* magPhysVol = findDaughterByName(m_FASER2PhysVol, "FASER2MagnetYokePhysical");
+    if (magPhysVol == nullptr) {
+        std::cerr << "FASER2Magnet volume not found in GDML file!" << std::endl;
+        throw std::runtime_error("FASER2Magnet volume not found in GDML file!");
+    }
+    std::cout << "Found magnet volume: " << magPhysVol->GetName() << std::endl;
+
+    // Now work out the bounds of the magnet
+    G4VSolid* magBoundingBox = dynamic_cast<G4VSolid*>(magPhysVol->GetLogicalVolume()->GetSolid());
+
+    const G4VSolid* magnetYoke = magBoundingBox->GetConstituentSolid(0);
+    const G4VSolid* magnetWindow = magBoundingBox->GetConstituentSolid(1);
+
+    G4ThreeVector minMagnetWindow, maxMagnetWindow, minMagnetYoke, maxMagnetYoke;
+    magnetYoke->BoundingLimits(minMagnetYoke, maxMagnetYoke);
+    magnetWindow->BoundingLimits(minMagnetWindow, maxMagnetWindow);
+
+    std::cout << "magnetYoke: min(" << minMagnetWindow.x() << ", " << minMagnetWindow.y() << ", " << minMagnetWindow.z() 
+            << ") max(" << maxMagnetWindow.x() << ", " << maxMagnetWindow.y() << ", " << maxMagnetWindow.z() << ")" << std::endl;
+
+    std::cout << "MagnetWindow: min(" << minMagnetYoke.x() << ", " << minMagnetYoke.y() << ", " << minMagnetYoke.z() 
+            << ") max(" << maxMagnetYoke.x() << ", " << maxMagnetYoke.y() << ", " << maxMagnetYoke.z() << ")" << std::endl;
+
+    // Get the centre of the magnet
+    // auto physvolTrans = m_FASER2PhysVol->GetTranslation();
+    G4ThreeVector magCentre = magPhysVol->GetTranslation();// + m_FASER2PhysVol->GetTranslation();
+    std::cout << "Magnet center: " << magCentre.x() << ", " << magCentre.y() << ", " << magCentre.z() << std::endl;
+    G4ThreeVector magBounds = (maxMagnetWindow - minMagnetWindow) / 2;
+
+
+    // Build a multirange magnetic field, define field within the magnet window - set to zero outsid
+    using BFieldRange = std::pair<Acts::RangeXD<3, double>, Acts::Vector3>;
+    
+    // Need to fill in the field for the whole volume
+    G4Box* FASER2BoundingBox = dynamic_cast<G4Box*>(m_FASER2PhysVol->GetLogicalVolume()->GetSolid());
+    
+    Acts::RangeXD<3, double> worldRange = Acts::RangeXD<3, double>(
+        {-FASER2BoundingBox->GetXHalfLength()*10000, -FASER2BoundingBox->GetYHalfLength()*10000, -FASER2BoundingBox->GetZHalfLength()*10000}, 
+        {FASER2BoundingBox->GetXHalfLength()*10000, FASER2BoundingBox->GetYHalfLength()*10000, FASER2BoundingBox->GetZHalfLength()*10000});
+    
+    BFieldRange worldRegion = {worldRange, {0,0,0}};
+
+    // Get the field range for the magnet window
+    Acts::RangeXD<3, double> magRange = Acts::RangeXD<3, double>(
+        {minMagnetWindow.x(), minMagnetWindow.z(), minMagnetWindow.y()}, 
+        {maxMagnetWindow.x(), maxMagnetWindow.z(), maxMagnetWindow.y()});
+
+    BFieldRange magRegion = {magRange, magField};
+
+    // Now put it all together in the multirange field. Important to note that the order of the ranges matters - the ranges at the end of the vector will take priority
+    std::shared_ptr<const Acts::MagneticFieldProvider> multiField = std::shared_ptr<const Acts::MultiRangeBField>(new Acts::MultiRangeBField({worldRegion, magRegion}));
+
+    m_magFieldStore.push_back(multiField);
+
+    return multiField;
+    // std::shared_ptr<const Acts::MagneticFieldProvider> bfield = 
+    // std::make_shared<RestrictedBField>(magField, 
+    // Acts::Vector3(magCentre.x(), magCentre.y(), magCentre.z()), 
+    // Acts::Vector3(magBounds.x(), magBounds.y(), magBounds.z()));
+
+    // m_magFieldStore.push_back(bfield);
+
+    // std::cout << "Created magnetic field" << std::endl;
+    // return bfield;
 }

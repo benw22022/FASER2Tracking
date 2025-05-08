@@ -198,8 +198,17 @@ if "__main__" == __name__:
     detector = Tracking.FASER2Geometry("share/gdml/FASER2_only.gdml")
     trackingGeometry = detector.getTrackingGeometry()
     
+    field = detector.createMagneticField(acts.Vector3(0, 0, 1 * u.T))
+    
+    print(field)
     # TODO: implement the correct restricted magnetic field
-    field = acts.ConstantBField(acts.Vector3(0, 0, 1 * u.T))
+    # field = acts.ConstantBField(acts.Vector3(0, 0, 1 * u.T))
+    
+    # print(field.isInside(acts.Vector3(0, 0, 0)))
+    # print(field)
+    # import sys
+    # sys.exit()
+    
     
 
     runTruthTrackingKalman(

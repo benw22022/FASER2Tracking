@@ -28,6 +28,8 @@
 #include "Acts/Plugins/Geant4/Geant4DetectorSurfaceFactory.hpp"
 #include "Acts/Geometry/GeometryIdentifier.hpp"
 #include "Acts/Geometry/TrackingGeometryVisitor.hpp"
+#include "Acts/MagneticField/MagneticFieldProvider.hpp"
+
 
 #include <memory>
 #include <ostream>
@@ -51,19 +53,21 @@
 #include <G4VPhysicalVolume.hh>
 #include <boost/filesystem.hpp>
 
+class RestrictedBField;
 
 class FASER2Geometry {
 
     public:
         FASER2Geometry(const std::string& gdmlFile);
 
-        G4VPhysicalVolume* findDaughterByName(G4VPhysicalVolume* pvol, G4String name);
+        G4VPhysicalVolume* findDaughterByName(G4VPhysicalVolume* pvol, G4String name) const;
 
         std::shared_ptr<const Acts::TrackingGeometry> getTrackingGeometry() const
         {
             return m_trackingGeometry;
         }
 
+        std::shared_ptr<const Acts::MagneticFieldProvider> createMagneticField(const Acts::Vector3& field);
 
     private:
         std::string m_gdmlFile;
@@ -72,8 +76,12 @@ class FASER2Geometry {
         G4VPhysicalVolume* m_FASER2PhysVol{nullptr};
         
         std::vector<std::shared_ptr<const Acts::DetectorElementBase>> m_detectorStore;
+        std::vector<std::shared_ptr<const Acts::MagneticFieldProvider>> m_magFieldStore;
+
         std::shared_ptr<const Acts::TrackingGeometry> m_trackingGeometry{nullptr};
         Acts::GeometryContext m_geometryContext;
+
+        G4Transform3D m_g4ToWorldTransform;
 
         void createGeometry();
         std::tuple<std::vector<std::shared_ptr<Acts::Surface>>, std::vector<std::shared_ptr<Acts::Geant4DetectorElement>>> buildGeant4Volumes();
