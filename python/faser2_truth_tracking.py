@@ -18,26 +18,6 @@ from acts.examples import (
 u = acts.UnitConstants 
 
 
-def runDigitizationConfig(
-    trackingGeometry,
-    input: Path,
-    output: Path,
-):
-    inputConfig = readDigiConfigFromJson(str(input))
-
-    digiConfigurator = DigitizationConfigurator()
-    digiConfigurator.compactify = True
-    digiConfigurator.inputDigiComponents = inputConfig
-
-    trackingGeometry.visitSurfaces(digiConfigurator)
-
-    outputConfig = DigiConfigContainer(digiConfigurator.outputDigiComponents)
-
-    writeDigiConfigToJson(outputConfig, str(output))
-    
-    return trackingGeometry
-
-
 def runTruthTrackingKalman(
     trackingGeometry: acts.TrackingGeometry,
     field: acts.MagneticFieldProvider,
