@@ -31,7 +31,6 @@
 
 #include "../include/FASER2Geometry.h"
 #include "../include/TelescopeDetectorElement.h"
-#include "../include/RestrictedBField.h"
 
 
 
@@ -294,9 +293,10 @@ std::tuple<std::vector<std::shared_ptr<Acts::Surface>>, std::vector<std::shared_
 /**
  * @brief Create the magnetic field for the FASER2 detector
  * 
- * @param field The magnetic field to use
+ * @param magField The magnetic field to use
  * @return std::shared_ptr<const Acts::MagneticFieldProvider> 
- * A shared pointer to the magnetic field provider
+ * A shared pointer to the magnetic field provider- in our case a multi-range field. 
+ * The magField vector is assigned to the magnet window and the rest of the volume is set to zero
  */
 std::shared_ptr<const Acts::MagneticFieldProvider> FASER2Geometry::createMagneticField(const Acts::Vector3& magField) {
     
@@ -333,7 +333,7 @@ std::shared_ptr<const Acts::MagneticFieldProvider> FASER2Geometry::createMagneti
     if (m_axisDirection == Acts::AxisDirection::AxisX) {
         rotation.rotateY(90.0 * CLHEP::deg);
     } else if (m_axisDirection == Acts::AxisDirection::AxisY) {
-        rotation.rotateX(90.0 * CLHEP::deg);
+        rotation.rotateX(-90.0 * CLHEP::deg);
     }
 
     minMagnetWindow *= rotation;
