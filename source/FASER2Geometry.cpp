@@ -331,9 +331,9 @@ std::shared_ptr<const Acts::MagneticFieldProvider> FASER2Geometry::createMagneti
     G4RotationMatrix rotation;
     rotation.rotateAxes(G4ThreeVector(1, 0, 0), G4ThreeVector(0, 1, 0), G4ThreeVector(0, 0, 1));
     if (m_axisDirection == Acts::AxisDirection::AxisX) {
-        rotation.rotateY(90.0 * CLHEP::deg);
+        rotation.rotateAxes(G4ThreeVector(0, 0, -1), G4ThreeVector(0, 1, 0), G4ThreeVector(1, 0, 0));
     } else if (m_axisDirection == Acts::AxisDirection::AxisY) {
-        rotation.rotateX(-90.0 * CLHEP::deg);
+        rotation.rotateAxes(G4ThreeVector(1, 0, 0), G4ThreeVector(0, 0, -1), G4ThreeVector(0, 1, 0));
     }
 
     minMagnetWindow *= rotation;
