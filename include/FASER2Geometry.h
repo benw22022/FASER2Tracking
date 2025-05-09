@@ -58,7 +58,7 @@ class RestrictedBField;
 class FASER2Geometry {
 
     public:
-        FASER2Geometry(const std::string& gdmlFile);
+        FASER2Geometry(const std::string& gdmlFilem, int axisDirection=2);
 
         G4VPhysicalVolume* findDaughterByName(G4VPhysicalVolume* pvol, G4String name) const;
 
@@ -71,6 +71,8 @@ class FASER2Geometry {
 
     private:
         std::string m_gdmlFile;
+        Acts::AxisDirection m_axisDirection; // 0 = X, 1 = Y, 2 = Z
+
         G4VPhysicalVolume* m_worldPhysVol{nullptr};
         G4VPhysicalVolume* m_hallPhysVol{nullptr};
         G4VPhysicalVolume* m_FASER2PhysVol{nullptr};

@@ -40,10 +40,15 @@
  * 
  * @param gdmlFile 
  * The GDML file to use for the geometry
+ * @param axisDirection
+ * The axis direction to use for the geometry. 0 = X, 1 = Y, 2 = Z (see: https://github.com/acts-project/acts/blob/94ed291e6f7b2afd3efc2508dac6f2c5826f0cc7/Core/include/Acts/Utilities/AxisDefinitions.hpp#L18)
  */
-FASER2Geometry::FASER2Geometry(const std::string& gdmlFile) : 
+FASER2Geometry::FASER2Geometry(const std::string& gdmlFile, int axisDirection) : 
     m_gdmlFile{gdmlFile}
-{
+{   
+    // Parse the enum
+    m_axisDirection = static_cast<Acts::AxisDirection>(axisDirection);
+
     // Get the world volume
     G4GDMLParser parser;
 
@@ -70,9 +75,13 @@ FASER2Geometry::FASER2Geometry(const std::string& gdmlFile) :
     createGeometry();
 }
 
+/**
+* @brief Find a daughter volume by name
+* @param pvol The parent volume
+* @param name The name of the daughter volume to find
+**/
 G4VPhysicalVolume* FASER2Geometry::findDaughterByName(G4VPhysicalVolume* pvol, G4String name) const {
     G4LogicalVolume* lvol = pvol->GetLogicalVolume();
-    // std::cout << "lvol->GetNoDaughters() = " << lvol->GetNoDaughters() << std::endl;
     for (G4int i = 0; i < lvol->GetNoDaughters(); i++) 
     {
         G4VPhysicalVolume* fDaughterPhysVol = lvol->GetDaughter(i);
@@ -103,13 +112,12 @@ void FASER2Geometry::createGeometry() {
     std::vector<Acts::LayerPtr> layers(nLayers);
     std::cout << "Found " << nLayers << " layers." << std::endl;
 
-    auto binValue = Acts::AxisDirection::AxisY; //? Make this configurable?
     Acts::RotationMatrix3 rotation = Acts::RotationMatrix3::Identity();
-    if (binValue == Acts::AxisDirection::AxisX) {
+    if (m_axisDirection == Acts::AxisDirection::AxisX) {
       rotation.col(0) = Acts::Vector3(0, 0, -1);
       rotation.col(1) = Acts::Vector3(0, 1, 0);
       rotation.col(2) = Acts::Vector3(1, 0, 0);
-    } else if (binValue == Acts::AxisDirection::AxisY) {
+    } else if (m_axisDirection == Acts::AxisDirection::AxisY) {
       rotation.col(0) = Acts::Vector3(1, 0, 0);
       rotation.col(1) = Acts::Vector3(0, 0, -1);
       rotation.col(2) = Acts::Vector3(0, 1, 0);
@@ -176,7 +184,7 @@ void FASER2Geometry::createGeometry() {
     auto length = abs(positions.back() - positions.front()) + 10._m;
     std::unique_ptr<const Acts::LayerArray> layArr(layArrCreator.layerArray(
         m_geometryContext, layVec, positions.front() - 2._mm, positions.back() + 2._mm,
-        Acts::BinningType::arbitrary, binValue)); // The binValue tells the LayerArray in which direction to bin the layers - This will orient the detector in the correct direction (i.e. the Y axis)
+        Acts::BinningType::arbitrary, m_axisDirection)); // The m_axisDirection tells the LayerArray in which direction to bin the layers - This will orient the detector in the correct direction
     
     // This is the bounding box for the detector - the functions like the world volume in Geant4
     std::shared_ptr<Acts::VolumeBounds> boundsVol = std::make_shared<Acts::CuboidVolumeBounds>(FASER2BoundingBox->GetXHalfLength()*2 + 5._mm, FASER2BoundingBox->GetYHalfLength()*2 + 5._mm, length + 10._mm);
@@ -191,7 +199,6 @@ void FASER2Geometry::createGeometry() {
             Acts::MutableTrackingVolumeVector{}, "FASER2");
 
     m_trackingGeometry = std::make_unique<Acts::TrackingGeometry>(trackVolume);
-
 }
 
 /**
@@ -284,6 +291,13 @@ std::tuple<std::vector<std::shared_ptr<Acts::Surface>>, std::vector<std::shared_
 }
 
 
+/**
+ * @brief Create the magnetic field for the FASER2 detector
+ * 
+ * @param field The magnetic field to use
+ * @return std::shared_ptr<const Acts::MagneticFieldProvider> 
+ * A shared pointer to the magnetic field provider
+ */
 std::shared_ptr<const Acts::MagneticFieldProvider> FASER2Geometry::createMagneticField(const Acts::Vector3& magField) {
     
     // Get the magnetic field from the GDML file
@@ -295,14 +309,37 @@ std::shared_ptr<const Acts::MagneticFieldProvider> FASER2Geometry::createMagneti
     std::cout << "Found magnet volume: " << magPhysVol->GetName() << std::endl;
 
     // Now work out the bounds of the magnet
+    G4ThreeVector magCentre = magPhysVol->GetTranslation();
+    std::cout << "Magnet center: " << magCentre.x() << ", " << magCentre.y() << ", " << magCentre.z() << std::endl;
+
     G4VSolid* magBoundingBox = dynamic_cast<G4VSolid*>(magPhysVol->GetLogicalVolume()->GetSolid());
 
     const G4VSolid* magnetYoke = magBoundingBox->GetConstituentSolid(0);
     const G4VSolid* magnetWindow = magBoundingBox->GetConstituentSolid(1);
 
-    G4ThreeVector minMagnetWindow, maxMagnetWindow, minMagnetYoke, maxMagnetYoke;
+    G4ThreeVector minMagnetWindow, maxMagnetWindow, minMagnetYoke, maxMagnetYoke, minWorld, maxWorld;
     magnetYoke->BoundingLimits(minMagnetYoke, maxMagnetYoke);
     magnetWindow->BoundingLimits(minMagnetWindow, maxMagnetWindow);
+
+    // Translate the bounds to the correct relative position
+    minMagnetWindow += magCentre;
+    maxMagnetWindow += magCentre;
+    minMagnetYoke += magCentre;
+    maxMagnetYoke += magCentre;
+
+    // Make sure that we rotate the magnet volume to align with the axis direction of the detector
+    G4RotationMatrix rotation;
+    rotation.rotateAxes(G4ThreeVector(1, 0, 0), G4ThreeVector(0, 1, 0), G4ThreeVector(0, 0, 1));
+    if (m_axisDirection == Acts::AxisDirection::AxisX) {
+        rotation.rotateY(90.0 * CLHEP::deg);
+    } else if (m_axisDirection == Acts::AxisDirection::AxisY) {
+        rotation.rotateX(90.0 * CLHEP::deg);
+    }
+
+    minMagnetWindow *= rotation;
+    maxMagnetWindow *= rotation;
+    minMagnetYoke   *= rotation;
+    maxMagnetYoke   *= rotation;
 
     std::cout << "magnetYoke: min(" << minMagnetWindow.x() << ", " << minMagnetWindow.y() << ", " << minMagnetWindow.z() 
             << ") max(" << maxMagnetWindow.x() << ", " << maxMagnetWindow.y() << ", " << maxMagnetWindow.z() << ")" << std::endl;
@@ -310,29 +347,24 @@ std::shared_ptr<const Acts::MagneticFieldProvider> FASER2Geometry::createMagneti
     std::cout << "MagnetWindow: min(" << minMagnetYoke.x() << ", " << minMagnetYoke.y() << ", " << minMagnetYoke.z() 
             << ") max(" << maxMagnetYoke.x() << ", " << maxMagnetYoke.y() << ", " << maxMagnetYoke.z() << ")" << std::endl;
 
-    // Get the centre of the magnet
-    // auto physvolTrans = m_FASER2PhysVol->GetTranslation();
-    G4ThreeVector magCentre = magPhysVol->GetTranslation();// + m_FASER2PhysVol->GetTranslation();
-    std::cout << "Magnet center: " << magCentre.x() << ", " << magCentre.y() << ", " << magCentre.z() << std::endl;
-    G4ThreeVector magBounds = (maxMagnetWindow - minMagnetWindow) / 2;
-
-
-    // Build a multirange magnetic field, define field within the magnet window - set to zero outsid
+            
+    // Build a multirange magnetic field, define field within the magnet window - set to zero outside
     using BFieldRange = std::pair<Acts::RangeXD<3, double>, Acts::Vector3>;
     
-    // Need to fill in the field for the whole volume
-    G4Box* FASER2BoundingBox = dynamic_cast<G4Box*>(m_FASER2PhysVol->GetLogicalVolume()->GetSolid());
+    // Need to fill in the zero field for the whole volume - make this as big as possible
+    minWorld = {-std::numeric_limits<float>::max(), -std::numeric_limits<float>::max(), -std::numeric_limits<float>::max()};
+    maxWorld = {std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max()};
     
     Acts::RangeXD<3, double> worldRange = Acts::RangeXD<3, double>(
-        {-FASER2BoundingBox->GetXHalfLength()*10000, -FASER2BoundingBox->GetYHalfLength()*10000, -FASER2BoundingBox->GetZHalfLength()*10000}, 
-        {FASER2BoundingBox->GetXHalfLength()*10000, FASER2BoundingBox->GetYHalfLength()*10000, FASER2BoundingBox->GetZHalfLength()*10000});
-    
+        {minWorld.x(), minWorld.y(), minWorld.z()},
+        {maxWorld.x(), maxWorld.y(), maxWorld.z()});
+        
     BFieldRange worldRegion = {worldRange, {0,0,0}};
 
     // Get the field range for the magnet window
     Acts::RangeXD<3, double> magRange = Acts::RangeXD<3, double>(
-        {minMagnetWindow.x(), minMagnetWindow.z(), minMagnetWindow.y()}, 
-        {maxMagnetWindow.x(), maxMagnetWindow.z(), maxMagnetWindow.y()});
+        {minMagnetWindow.x(), minMagnetWindow.y(), minMagnetWindow.z()}, 
+        {maxMagnetWindow.x(), maxMagnetWindow.y(), maxMagnetWindow.z()});
 
     BFieldRange magRegion = {magRange, magField};
 
@@ -342,13 +374,4 @@ std::shared_ptr<const Acts::MagneticFieldProvider> FASER2Geometry::createMagneti
     m_magFieldStore.push_back(multiField);
 
     return multiField;
-    // std::shared_ptr<const Acts::MagneticFieldProvider> bfield = 
-    // std::make_shared<RestrictedBField>(magField, 
-    // Acts::Vector3(magCentre.x(), magCentre.y(), magCentre.z()), 
-    // Acts::Vector3(magBounds.x(), magBounds.y(), magBounds.z()));
-
-    // m_magFieldStore.push_back(bfield);
-
-    // std::cout << "Created magnetic field" << std::endl;
-    // return bfield;
 }

@@ -195,7 +195,7 @@ if "__main__" == __name__:
     srcdir = Path(__file__).resolve().parent.parent.parent.parent
 
     print(srcdir)
-    detector = Tracking.FASER2Geometry("share/gdml/FASER2_only.gdml")
+    detector = Tracking.FASER2Geometry("share/gdml/FASER2_only.gdml", axis=1)
     trackingGeometry = detector.getTrackingGeometry()
     
     field = detector.createMagneticField(acts.Vector3(0, 0, 1 * u.T))
