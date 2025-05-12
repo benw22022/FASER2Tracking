@@ -11,6 +11,7 @@ Code should work on any el9 machine (or in case you want to run this on your lap
 To compile the FASER2 geometry do:
 
 ```bash
+git clone --recursive https://github.com/benw22022/FASER2Tracking.git
 source /cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-gcc11-opt/setup.sh
 mkdir build
 cd build
