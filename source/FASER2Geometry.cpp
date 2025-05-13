@@ -165,7 +165,8 @@ void FASER2Geometry::createGeometry() {
         // Associate the layer to the surface
         auto mutableSurface = const_cast<Acts::Surface*>(surface.get());
         mutableSurface->associateLayer(*layers[surface_idx]);
-        std::cout << "Placing surface " << surface_idx << " at " << mutableSurface->center(m_geometryContext) << std::endl;
+        std::cout << mutableSurface->bounds() << std::endl;
+        std::cout << "Placing surface " << surface_idx << " at (" << mutableSurface->center(m_geometryContext).x() << ", " << mutableSurface->center(m_geometryContext).y() << ", " << mutableSurface->center(m_geometryContext).z() << ")" << std::endl;
         surface_idx++;
     }
 
@@ -279,7 +280,6 @@ std::tuple<std::vector<std::shared_ptr<Acts::Surface>>, std::vector<std::shared_
     
     for (auto& s : g4SurfaceCache.passiveSurfaces) {
         passive_surfaces.push_back(s);
-        std::cout << "Passive surface: " << s->name()<< std::endl;
     }
 
     // Add the passive surfaces
