@@ -278,6 +278,7 @@ std::tuple<std::vector<std::shared_ptr<Acts::Surface>>, std::vector<std::shared_
 
     }
     
+    //TODO: Add the passive surfaces to the tracking geometry?
     for (auto& s : g4SurfaceCache.passiveSurfaces) {
         passive_surfaces.push_back(s);
     }
@@ -310,7 +311,7 @@ std::shared_ptr<const Acts::MagneticFieldProvider> FASER2Geometry::createMagneti
 
     // Now work out the bounds of the magnet
     G4ThreeVector magCentre = magPhysVol->GetTranslation();
-    std::cout << "Magnet center: " << magCentre.x() << ", " << magCentre.y() << ", " << magCentre.z() << std::endl;
+    std::cout << "Magnet center (pre-rotation): " << magCentre.x() << ", " << magCentre.y() << ", " << magCentre.z() << std::endl;
 
     G4VSolid* magBoundingBox = dynamic_cast<G4VSolid*>(magPhysVol->GetLogicalVolume()->GetSolid());
 
@@ -354,7 +355,7 @@ std::shared_ptr<const Acts::MagneticFieldProvider> FASER2Geometry::createMagneti
     // Need to fill in the zero field for the whole volume - make this as big as possible
     minWorld = {-std::numeric_limits<float>::max(), -std::numeric_limits<float>::max(), -std::numeric_limits<float>::max()};
     maxWorld = {std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max()};
-    
+
     Acts::RangeXD<3, double> worldRange = Acts::RangeXD<3, double>(
         {minWorld.x(), minWorld.y(), minWorld.z()},
         {maxWorld.x(), maxWorld.y(), maxWorld.z()});
