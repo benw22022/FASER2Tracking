@@ -41,13 +41,21 @@ set(ACTS_BUILD_PLUGIN_ACTSVG ON)
 # set(ACTS_BUILD_FATRAS ON)
 # set(ACTS_BUILD_FATRAS_ROOT ON)
 set(ACTS_BUILD_EXAMPLES_PYTHON_BINDINGS ON)
+set(ACTS_BUILD_PLUGIN_PYTHON ON)
+set(ACTS_BUILD_EXAMPLES ON)
 set(ACTS_BUILD_EXAMPLES_GEANT4 ON)
 FetchContent_MakeAvailable(Acts)
 FetchContent_GetProperties(Acts)
 
 # Set the include directories for the Acts compoment modules - you'll need to add to here when you want to include a new Acts module/plugin
 include_directories(SYSTEM "${Acts_SOURCE_DIR}/Core/include")
+include_directories(SYSTEM "${Acts_SOURCE_DIR}/Examples/Framework/include")
 include_directories(SYSTEM "${Acts_SOURCE_DIR}/Plugins/Geant4/include")
+include_directories(SYSTEM "${Acts_SOURCE_DIR}/Plugins/FpeMonitoring/include")
+include_directories(SYSTEM "${Acts_SOURCE_DIR}/Fatras/include")
+include_directories(SYSTEM "${Acts_SOURCE_DIR}/Plugins/Python/include")
+include_directories(SYSTEM "${Acts_SOURCE_DIR}/Examples/Python/include")
+
 
 # Get the source, header and python binding files
 file(GLOB SOURCE_FILES ${PROJECT_SOURCE_DIR}/source/*.cpp)
@@ -65,7 +73,7 @@ pybind11_add_module(Tracking
 # Compile the pybind11 module against the Acts, ROOT and Geant4 libraries
 target_include_directories(Tracking PUBLIC ${ROOT_INCLUDE_DIRS} ${Geant4_INCLUDE_DIRS} ${ZLIB_INCLUDE_DIRS})
 target_compile_definitions(Tracking PUBLIC ${Geant4_DEFINITIONS})
-target_link_libraries(Tracking PUBLIC ActsCore ActsPluginGeant4 ${ROOT_LIBRARIES} ${Geant4_LIBRARIES})
+target_link_libraries(Tracking PUBLIC ActsCore ActsExamplesFramework ActsPluginGeant4 ActsPythonUtilities ActsExamplesUtilities ${ROOT_LIBRARIES} ${Geant4_LIBRARIES})
 
 # Copy scripts over to the build directory
 set(Tracking_scripts
