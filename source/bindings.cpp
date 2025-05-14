@@ -15,9 +15,9 @@ PYBIND11_MODULE(Tracking, m) {
         .def("createMagneticField", &FASER2Geometry::createMagneticField);
 
     // py::class_<ActsExamples::IReader, std::shared_ptr<ActsExamples::IReader>>(m, "IReader", py::module_local())
-    // .def("name", &ActsExamples::IReader::name);
+    // .def("name", &ActsExamples::IReader::name); //! Don't do something like this!
 
-    py::object IReader = (py::object) py::module_::import("acts.examples").attr("IReader");
+    py::object IReader = (py::object) py::module_::import("acts.examples").attr("IReader"); //! Do this instead
 
     py::class_<RootSimHitReader::Config>(m, "RootSimHitReaderConfig", py::module_local())
         .def(py::init<std::string, std::string, std::string, int>(), 
