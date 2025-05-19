@@ -2,6 +2,7 @@
 
 from pathlib import Path
 from typing import Optional
+import argparse
 
 import Tracking # This is our python binding for our detector geometry
 
@@ -27,6 +28,10 @@ def runTruthTrackingKalman(
     inputHitsPath: Optional[Path] = None,
     decorators=[],
     reverseFilteringMomThreshold=0 * u.GeV,
+    axisDirection=1,
+    nevents=1000,
+    nthreads=-1,
+    offset=acts.Vector3(0,0,0),
     s: acts.examples.Sequencer = None,
 ):
     from acts.examples.simulation import (
@@ -47,7 +52,7 @@ def runTruthTrackingKalman(
     )
 
     s = s or acts.examples.Sequencer(
-        events=1000, numThreads=-1, logLevel=acts.logging.DEBUG
+        events=nevents, numThreads=nthreads, logLevel=acts.logging.DEBUG
     )
 
     for d in decorators:
@@ -77,14 +82,21 @@ def runTruthTrackingKalman(
     else:
         logger.info("Reading particles from %s", inputParticlePath.resolve())
         assert inputParticlePath.exists()
+        cfg = Tracking.RootParticleReaderConfig(
+            filePath=str(inputParticlePath.resolve()),
+            outputParticles="particles_generated",
+            axisDirection=axisDirection,
+            offset=offset
+        )
         s.addReader(
-            acts.examples.RootParticleReader(
+            Tracking.RootParticleReader(
+                cfg,
                 level=acts.logging.INFO,
-                filePath=str(inputParticlePath.resolve()),
-                outputParticles="particles_generated",
             )
         )
         s.addWhiteboardAlias("particles", "particles_generated")
+        s.addWhiteboardAlias("particles_generated_selected", "particles_generated")
+        s.addWhiteboardAlias("particles_simulated_selected", "particles_generated")
 
     if inputHitsPath is None:
         addFatras(
@@ -97,11 +109,15 @@ def runTruthTrackingKalman(
     else:
         logger.info("Reading hits from %s", inputHitsPath.resolve())
         assert inputHitsPath.exists()
+        cfg = Tracking.RootSimHitReaderConfig(
+            filePath=str(inputHitsPath.resolve()),
+            treeName='hits',
+            outputSimHits="simhits",
+            axisDirection=axisDirection,)
         s.addReader(
-            acts.examples.RootSimHitReader(
+            Tracking.RootSimHitReader(
+                cfg,
                 level=acts.logging.INFO,
-                filePath=str(inputHitsPath.resolve()),
-                outputSimHits="simhits",
             )
         )
 
@@ -191,30 +207,53 @@ def runTruthTrackingKalman(
     return s
 
 
+def get_argparser():
+    
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--geometry", "-g", type=str, default="share/gdml/FASER2_only.gdml", help = "Path to gdml geometry file")
+    parser.add_argument("--axis", "-a", type=int, default=1, help = "Enum describing the orientation of the detector axis: x=0, y=1, z=2")
+    parser.add_argument("--field", "-f", type=float, default=1, help = "Magnetic field strength in tesla")
+    parser.add_argument("--input_file", "-i", type=str, default=None, help = "Input hits & particle file")
+    parser.add_argument("--nevents", "-n", type=int, default=100, help = "Number of events")
+    parser.add_argument("--nthreads", "-j", type=int, default=-1, help = "Number of threads to use")
+
+    return parser.parse_args()
+
+
 if "__main__" == __name__:
     srcdir = Path(__file__).resolve().parent.parent.parent.parent
-
-    print(srcdir)
-    detector = Tracking.FASER2Geometry("share/gdml/FASER2_only.gdml", axis=1)
+    
+    #* Get script args
+    args = get_argparser()
+    
+    detector = Tracking.FASER2Geometry(args.geometry, axis=args.axis)
     trackingGeometry = detector.getTrackingGeometry()
     
-    field = detector.createMagneticField(acts.Vector3(0, 0, 1 * u.T))
+    field_strength_vect = acts.Vector3(0, 0, 1 * u.T)
+    if args.axis == 0 :
+        field_strength_vect = acts.Vector3(0, 1 * u.T, 0)
+    if args.axis == 2 :
+        field_strength_vect = acts.Vector3(1 * u.T, 0, 0)
     
-    print(field)
-    # TODO: implement the correct restricted magnetic field
-    # field = acts.ConstantBField(acts.Vector3(0, 0, 1 * u.T))
+    field = detector.createMagneticField(field_strength_vect)
     
-    # print(field.isInside(acts.Vector3(0, 0, 0)))
-    # print(field)
-    # import sys
-    # sys.exit()
+    offset = detector.getTranslation()
+    translation = offset
     
+    offset = acts.Vector3(translation[0], translation[1], translation[2])
     
-
+    print("offset is ", offset)
+    
     runTruthTrackingKalman(
         trackingGeometry=trackingGeometry,
         field=field,
-        digiConfigFile="_deps/acts-src/Examples/Algorithms/Digitization/share/default-smearing-config-telescope.json",
+        digiConfigFile="_deps/acts-src/Examples/Algorithms/Digitization/share/default-smearing-config-telescope.json", #TODO: Make digitization respected detector orientation 
         outputDir=Path.cwd(),
+        inputParticlePath=None if args.input_file is None else Path(args.input_file),
+        axisDirection=args.axis,
+        # inputHitsPath=None if args.input_file is None else Path(args.input_file),
+        nevents=args.nevents,
+        nthreads=args.nthreads,
+        offset=offset,
     ).run()
     

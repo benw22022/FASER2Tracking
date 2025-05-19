@@ -50,6 +50,7 @@ FetchContent_GetProperties(Acts)
 # Set the include directories for the Acts compoment modules - you'll need to add to here when you want to include a new Acts module/plugin
 include_directories(SYSTEM "${Acts_SOURCE_DIR}/Core/include")
 include_directories(SYSTEM "${Acts_SOURCE_DIR}/Examples/Framework/include")
+include_directories(SYSTEM "${Acts_SOURCE_DIR}/Examples/Io/Root/include")
 include_directories(SYSTEM "${Acts_SOURCE_DIR}/Plugins/Geant4/include")
 include_directories(SYSTEM "${Acts_SOURCE_DIR}/Plugins/FpeMonitoring/include")
 include_directories(SYSTEM "${Acts_SOURCE_DIR}/Fatras/include")

@@ -111,15 +111,15 @@ void FASER2Geometry::createGeometry() {
     std::vector<Acts::LayerPtr> layers(nLayers);
     std::cout << "Found " << nLayers << " layers." << std::endl;
 
-    Acts::RotationMatrix3 rotation = Acts::RotationMatrix3::Identity();
+    m_rotation = Acts::RotationMatrix3::Identity();
     if (m_axisDirection == Acts::AxisDirection::AxisX) {
-      rotation.col(0) = Acts::Vector3(0, 0, -1);
-      rotation.col(1) = Acts::Vector3(0, 1, 0);
-      rotation.col(2) = Acts::Vector3(1, 0, 0);
+      m_rotation.col(0) = Acts::Vector3(0, 0, -1);
+      m_rotation.col(1) = Acts::Vector3(0, 1, 0);
+      m_rotation.col(2) = Acts::Vector3(1, 0, 0);
     } else if (m_axisDirection == Acts::AxisDirection::AxisY) {
-      rotation.col(0) = Acts::Vector3(1, 0, 0);
-      rotation.col(1) = Acts::Vector3(0, 0, -1);
-      rotation.col(2) = Acts::Vector3(0, 1, 0);
+      m_rotation.col(0) = Acts::Vector3(1, 0, 0);
+      m_rotation.col(1) = Acts::Vector3(0, 0, -1);
+      m_rotation.col(2) = Acts::Vector3(0, 1, 0);
     }
 
     std::vector<Acts::Vector3> surfaces_positions;
@@ -138,7 +138,7 @@ void FASER2Geometry::createGeometry() {
         Acts::Translation3 trans(offsets[0], offsets[1], surface_position.z());
         positions.push_back(surface_position.z());
         // Acts::Translation3 trans(offsets[0], offsets[1], positions[surface_idx]);
-        Acts::Transform3 trafo(rotation * trans); // This transform will be used to place the surface in the correct position and orientation
+        Acts::Transform3 trafo(m_rotation * trans); // This transform will be used to place the surface in the correct position and orientation
 
         const auto surfaceMaterial = surface_cpy->surfaceMaterialSharedPtr();
 
@@ -190,7 +190,7 @@ void FASER2Geometry::createGeometry() {
     std::shared_ptr<Acts::VolumeBounds> boundsVol = std::make_shared<Acts::CuboidVolumeBounds>(FASER2BoundingBox->GetXHalfLength()*2 + 5._mm, FASER2BoundingBox->GetYHalfLength()*2 + 5._mm, length + 10._mm);
     
     Acts::Translation3 transVol(offsets[0], offsets[1], (positions.front() + positions.back()) * 0.5);
-    Acts::Transform3 trafoVol(rotation * transVol);
+    Acts::Transform3 trafoVol(m_rotation * transVol);
     
     // Create the tracking volume and the tracking geometry
     // TODO: Figure out how to fill the volume with material (i.e. air)
@@ -217,11 +217,19 @@ std::tuple<std::vector<std::shared_ptr<Acts::Surface>>, std::vector<std::shared_
     // rot.rotateY(M_PI / 2);  // Rotates around Y to shift Z → X
 
     G4Box* FASER2BoundingBox = dynamic_cast<G4Box*>(m_FASER2PhysVol->GetLogicalVolume()->GetSolid());
-    auto physvolTrans = m_FASER2PhysVol->GetTranslation();
+    G4ThreeVector physvolTrans = m_FASER2PhysVol->GetTranslation();
     std::cout << "FASER2PhysVol initial position: " << physvolTrans.x() << " " << physvolTrans.y() << " " << physvolTrans.z() << std::endl;
-    G4ThreeVector translation(-physvolTrans.x(), -physvolTrans.y(), -physvolTrans.z());
+    m_translation = G4ThreeVector(-physvolTrans.x(), -physvolTrans.y(), -physvolTrans.z());
     // G4Transform3D m_g4ToWorldTransform;
-    G4Transform3D m_g4ToWorldTransform(rot, translation);  // This will translate the detector phys volume to x=0, y=0. This will make placing the surfaces easier
+    G4Transform3D m_g4ToWorldTransform(rot, m_translation);  // This will translate the detector phys volume to x=0, y=0. This will make placing the surfaces easier
+
+    G4Box* hallBox = dynamic_cast<G4Box*>(m_hallPhysVol->GetLogicalVolume()->GetSolid());
+    G4ThreeVector hallvolTrans = m_hallPhysVol->GetTranslation();
+    
+    std::cout << "hall trans " << hallvolTrans << std::endl;
+
+    m_global_translation = physvolTrans;
+    m_global_translation -= G4ThreeVector(0, 0, hallvolTrans.z());
 
     Acts::Geant4DetectorSurfaceFactory::Options g4SurfaceOptions;
     g4SurfaceOptions.sensitiveSurfaceSelector =

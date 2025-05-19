@@ -53,8 +53,6 @@
 #include <G4VPhysicalVolume.hh>
 #include <boost/filesystem.hpp>
 
-class RestrictedBField;
-
 class FASER2Geometry {
 
     public:
@@ -69,6 +67,13 @@ class FASER2Geometry {
 
         std::shared_ptr<const Acts::MagneticFieldProvider> createMagneticField(const Acts::Vector3& field);
 
+        Acts::Vector3 getTranslation()
+        {
+            Acts::Vector3 acts_translation{m_global_translation.x(), m_global_translation.y(), m_global_translation.z()};
+            // Acts::Vector3 acts_translation{m_translation.x(), m_translation.y(), m_translation.z()};
+            return acts_translation; //m_rotation * acts_translation;
+        }
+
     private:
         std::string m_gdmlFile;
         Acts::AxisDirection m_axisDirection; // 0 = X, 1 = Y, 2 = Z
@@ -76,6 +81,10 @@ class FASER2Geometry {
         G4VPhysicalVolume* m_worldPhysVol{nullptr};
         G4VPhysicalVolume* m_hallPhysVol{nullptr};
         G4VPhysicalVolume* m_FASER2PhysVol{nullptr};
+
+        G4ThreeVector m_translation;
+        G4ThreeVector m_global_translation;
+        Acts::RotationMatrix3 m_rotation;
         
         std::vector<std::shared_ptr<const Acts::DetectorElementBase>> m_detectorStore;
         std::vector<std::shared_ptr<const Acts::MagneticFieldProvider>> m_magFieldStore;

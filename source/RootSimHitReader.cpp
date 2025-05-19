@@ -52,6 +52,10 @@ void RootSimHitReader::initialise()
     throw std::invalid_argument("Missing tree name");
   }
 
+  std::cout << "m_cfg.filePath = " << m_cfg.filePath << std::endl;
+  std::cout << "m_cfg.treeName = " << m_cfg.treeName << std::endl;
+  std::cout << "m_cfg.outputSimHits = " << m_cfg.outputSimHits << std::endl;
+
   m_outputSimHits.initialize(m_cfg.outputSimHits);
 
   // Set the branches
