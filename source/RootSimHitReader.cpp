@@ -10,6 +10,7 @@
 
 #include "Acts/Definitions/PdgParticle.hpp"
 #include "Acts/Utilities/Logger.hpp"
+#include "Acts/Geometry/GeometryIdentifier.hpp"
 #include "ActsExamples/EventData/SimParticle.hpp"
 #include "ActsExamples/Framework/AlgorithmContext.hpp"
 #include "ActsFatras/EventData/ProcessType.hpp"
@@ -167,10 +168,16 @@ ActsExamples::ProcessCode RootSimHitReader::read(const ActsExamples::AlgorithmCo
       break;
     }
 
-    const Acts::GeometryIdentifier geoid = m_uint64Columns.at("geometry_id");
+    // const Acts::GeometryIdentifier geoid = m_uint64Columns.at("geometry_id");
     const ActsExamples::SimBarcode pid = m_uint64Columns.at("particle_id");
     const auto index = m_int32Columns.at("index");
 
+    Acts::GeometryIdentifier geoid;
+    geoid = geoid.withVolume(m_uint32Columns.at("volume_id"));
+    geoid = geoid.withBoundary(m_uint32Columns.at("boundary_id"));
+    geoid = geoid.withLayer(m_uint32Columns.at("layer_id"));
+    geoid = geoid.withApproach(m_uint32Columns.at("approach_id"));
+    geoid = geoid.withSensitive(m_uint32Columns.at("sensitive_id"));
 
     Acts::RotationMatrix3 rotation = Acts::RotationMatrix3::Identity();
     if (m_axisDirection == Acts::AxisDirection::AxisX) {
