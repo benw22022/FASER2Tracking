@@ -145,7 +145,7 @@ void FASER2Geometry::createGeometry() {
         // Create the detector element - this is the 'sensitive' object
         std::shared_ptr<ActsExamples::TelescopeDetectorElement> detElement = nullptr;
         detElement = std::make_shared<ActsExamples::TelescopeDetectorElement>(
-              std::make_shared<const Acts::Transform3>(trafo), pBounds, 1._um,
+              std::make_shared<const Acts::Transform3>(trafo), pBounds, 1._cm,
               surfaceMaterial);
         
         // Get the surface from the detector element
@@ -229,7 +229,7 @@ std::tuple<std::vector<std::shared_ptr<Acts::Surface>>, std::vector<std::shared_
     std::cout << "hall trans " << hallvolTrans << std::endl;
 
     m_global_translation = physvolTrans;
-    m_global_translation -= G4ThreeVector(0, 0, hallvolTrans.z());
+    m_global_translation -= G4ThreeVector(hallvolTrans.x(), hallvolTrans.y(), hallvolTrans.z());
 
     Acts::Geant4DetectorSurfaceFactory::Options g4SurfaceOptions;
     g4SurfaceOptions.sensitiveSurfaceSelector =
