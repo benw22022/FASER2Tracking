@@ -16,6 +16,8 @@
 #include <Acts/Definitions/Algebra.hpp>
 #include <Acts/Definitions/Units.hpp>
 #include <Acts/Utilities/AxisDefinitions.hpp>
+#include <Acts/Geometry/GeometryContext.hpp>
+#include <Acts/Geometry/TrackingGeometry.hpp>
 
 #include <cstddef>
 #include <cstdint>
@@ -43,6 +45,12 @@ class RootSimHitReader : public ActsExamples::IReader {
     std::string filePath;
     /// Axis to orient the detector in 
     int axisDirection = 2; // 0 = X, 1 = Y, 2 = Z 
+    /// Detector Offset
+    Acts::Vector3 offset={0,0,0};
+    /// Detector geometry
+    std::shared_ptr<const Acts::TrackingGeometry> trackingGeometry=nullptr;
+    /// Geometry Context
+    Acts::GeometryContext geometryContext = Acts::GeometryContext();
   };
 
   RootSimHitReader(const RootSimHitReader &) = delete;

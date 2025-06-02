@@ -195,6 +195,7 @@ ActsExamples::ProcessCode RootSimHitReader::read(const ActsExamples::AlgorithmCo
         m_floatColumns.at("ty") * Acts::UnitConstants::mm,
         m_floatColumns.at("tz") * Acts::UnitConstants::mm,
     };
+    pos3 = m_cfg.offset + pos3;
     pos3 = rotation * pos3;
 
     Acts::Vector3 before3 = {
@@ -203,6 +204,49 @@ ActsExamples::ProcessCode RootSimHitReader::read(const ActsExamples::AlgorithmCo
         m_floatColumns.at("tpz") * Acts::UnitConstants::GeV,
     };
     before3 = rotation * before3;
+
+
+    // If we are given a tracking geometry then we can try and snap our hits onto it
+    if (m_cfg.trackingGeometry)
+    { 
+      ACTS_DEBUG("Will try to snap hits to geometry");
+      auto surfaceByIdentifier = m_cfg.trackingGeometry->geoIdSurfaceMap();
+      auto surfaceItr = surfaceByIdentifier.find(geoid); 
+
+      // See if our hit geoid that we constucted can be mapped on our detector
+      if (surfaceItr == surfaceByIdentifier.end())
+      {
+        ACTS_ERROR("Could not find surface that hit points to. Hit geoId given was" << geoid);
+        return ActsExamples::ProcessCode::ABORT;
+      }
+
+      const Acts::Surface* surfacePtr = surfaceItr->second;
+      auto surfaceCentre = surfacePtr->center(m_cfg.geometryContext);
+
+      // The surface should be centred on zero in two axis and have a non-zero position in the remaining axis
+      int the_non_zero_idx{-1};
+      for (unsigned int i{0}; i < 3; i++)
+      {
+        if (surfaceCentre[i] != 0)
+        {
+          the_non_zero_idx = i;
+        }
+      }
+
+      // If the surface is centred exactly on (0,0,0) then we have an ambiguity - so crash out
+      if (the_non_zero_idx == 0)
+      {
+        ACTS_ERROR("Tried to snap hit to surface but surface is centred on (0,0,0). I'm not sure what to do here! You should rewrite this hacky bit of code ;)");
+        return ActsExamples::ProcessCode::ABORT;
+      }
+
+      // Otherwise - ovewrite the detector axis coord with the centre of the surface in that axis. I hope this is making sense
+      pos3[the_non_zero_idx] = surfaceCentre[the_non_zero_idx];
+    }
+    else
+    {
+      ACTS_DEBUG("No tracking geometry provided - will not try and snap hits to detector");
+    }
 
     Acts::Vector3 delta3 = {
         m_floatColumns.at("deltapx") * Acts::UnitConstants::GeV,
