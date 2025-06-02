@@ -52,7 +52,7 @@ def runTruthTrackingKalman(
     )
 
     s = s or acts.examples.Sequencer(
-        events=nevents, numThreads=nthreads, logLevel=acts.logging.DEBUG
+        events=nevents, numThreads=nthreads, logLevel=acts.logging.INFO
     )
 
     for d in decorators:
@@ -66,7 +66,7 @@ def runTruthTrackingKalman(
     if inputParticlePath is None:
         addParticleGun(
             s,
-            ParticleConfig(num=1, pdg=acts.PdgParticle.eMuon, randomizeCharge=True),
+            ParticleConfig(num=2, pdg=acts.PdgParticle.eMuon, randomizeCharge=True),
             EtaConfig(-1, 1, uniform=True), # Give a bit of variation in eta 
             MomentumConfig(1.0 * u.GeV, 100.0 * u.GeV, transverse=True),
             PhiConfig(90 * u.degree, 90 * u.degree), # Fire the muons straight along the y axis
@@ -76,7 +76,8 @@ def runTruthTrackingKalman(
             ),
             multiplicity=1,
             rnd=rnd,
-            logLevel=acts.logging.DEBUG,
+            logLevel=acts.logging.INFO,
+            # outputDirRoot="particles_root",
             printParticles = True,
         )
     else:
@@ -86,12 +87,12 @@ def runTruthTrackingKalman(
             filePath=str(inputParticlePath.resolve()),
             outputParticles="particles_generated",
             axisDirection=axisDirection,
-            offset=offset
+            offset=offset,
         )
         s.addReader(
             Tracking.RootParticleReader(
                 cfg,
-                level=acts.logging.INFO,
+                # level=acts.logging.DEBUG,
             )
         )
         s.addWhiteboardAlias("particles", "particles_generated")
@@ -113,7 +114,9 @@ def runTruthTrackingKalman(
             filePath=str(inputHitsPath.resolve()),
             treeName='hits',
             outputSimHits="simhits",
-            axisDirection=axisDirection,)
+            axisDirection=axisDirection,
+            trackingGeometry=trackingGeometry
+            )
         s.addReader(
             Tracking.RootSimHitReader(
                 cfg,
@@ -129,18 +132,18 @@ def runTruthTrackingKalman(
         rnd=rnd,
         outputDirCsv="digi_hits_csv",
         outputDirRoot="digi_hits_root",
-        logLevel=acts.logging.DEBUG,
+        logLevel=acts.logging.INFO,
     )
 
     addDigiParticleSelection(
         s,
         ParticleSelectorConfig(
             pt=(0.9 * u.GeV, None),
-            measurements=(0, None),
+            measurements=(3, None),
             removeNeutral=True,
             removeSecondaries=True,
         ),
-        logLevel=acts.logging.DEBUG,
+        logLevel=acts.logging.INFO,
     )
 
     addSeeding(
@@ -151,6 +154,7 @@ def runTruthTrackingKalman(
         inputParticles="particles_generated",
         seedingAlgorithm=SeedingAlgorithm.TruthSmeared,
         particleHypothesis=acts.ParticleHypothesis.muon,
+        logLevel=acts.logging.INFO,
     )
 
     addKalmanTracks(
@@ -166,7 +170,7 @@ def runTruthTrackingKalman(
             inputTracks="tracks",
             outputTracks="selected-tracks",
             selectorConfig=acts.TrackSelector.Config(
-                minMeasurements=0,
+                minMeasurements=3,
             ),
         )
     )
@@ -251,7 +255,7 @@ if "__main__" == __name__:
         outputDir=Path.cwd(),
         inputParticlePath=None if args.input_file is None else Path(args.input_file),
         axisDirection=args.axis,
-        # inputHitsPath=None if args.input_file is None else Path(args.input_file),
+        inputHitsPath=None if args.input_file is None else Path(args.input_file),
         nevents=args.nevents,
         nthreads=args.nthreads,
         offset=offset,
