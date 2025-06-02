@@ -44,6 +44,10 @@ class RootParticleReader : public ActsExamples::IReader {
     int axisDirection = 2;
     // Set vertex offset
     Acts::Vector3 offset = {0,0,0};
+    //// Map Geant4 particle ID to Acts Particle ID (FATRAS Barcode)
+    //// Should really be a private member of the class but adding additional methods to the python binding is too hard
+    //// Making it a member of the config I think is the easiest way to allow the user to read it, but it really shouldn't be modified by the user
+    //// std::map<long unsigned int, long unsigned int> particleIdMap;
   };
 
   /// Constructor

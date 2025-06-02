@@ -174,7 +174,13 @@ ActsExamples::ProcessCode RootParticleReader::read(const ActsExamples::Algorithm
     p.setPdg(static_cast<Acts::PdgParticle>((*m_particleType).at(i)));
     p.setCharge((*m_q).at(i) * Acts::UnitConstants::e);
     p.setMass((*m_m).at(i) * Acts::UnitConstants::GeV);
-    p.setParticleId((*m_particleId).at(0));
+    // auto particleId = ActsFatras::Barcode();
+    // particleId.setVertexPrimary(0);
+    // particleId.setVertexPrimary(1);
+    // particleId.setGeneration(0);
+    // particleId.setSubParticle(0);
+    // particleId.setParticle(i);
+    p.setParticleId((*m_particleId).at(i));
 
     ActsExamples::SimParticleState& initialState = p.initial();
 
@@ -232,7 +238,7 @@ ActsExamples::ProcessCode RootParticleReader::read(const ActsExamples::Algorithm
     
     particles.insert(p);
   }
-
+  
   ACTS_DEBUG("Read " << particles.size() << " particles for event "
                      << context.eventNumber);
 
