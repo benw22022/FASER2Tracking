@@ -47,7 +47,7 @@ PYBIND11_MODULE(Tracking, m) {
              py::arg("filePath"),
              py::arg("axisDirection")=2,
              py::arg("offset")=Acts::Vector3(0,0,0)
-            )
+            );
             // .def_readonly("particleIdMap", &RootParticleReader::Config::particleIdMap);
     
     ACTS_PYTHON_DECLARE_READER(RootSimHitReader, m, "RootSimHitReader", treeName, filePath, outputSimHits, axisDirection, offset);
