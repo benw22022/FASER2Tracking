@@ -67,8 +67,30 @@ class FASER2Geometry {
 
         std::shared_ptr<const Acts::MagneticFieldProvider> createMagneticField(const Acts::Vector3& field);
 
-        Acts::Vector3 getTranslation()
+        Acts::GeometryContext getGeometryContext() const {return m_geometryContext;};
+
+        //TODO: clean this up!
+        Acts::Vector3 getTranslation() 
         {
+            
+            G4Box* FASER2BoundingBox = dynamic_cast<G4Box*>(m_FASER2PhysVol->GetLogicalVolume()->GetSolid());
+            G4ThreeVector physvolTrans = m_FASER2PhysVol->GetTranslation();
+            std::cout << "FASER2PhysVol initial position: " << physvolTrans.x() << " " << physvolTrans.y() << " " << physvolTrans.z() << std::endl;
+            
+            G4Box* hallBox = dynamic_cast<G4Box*>(m_hallPhysVol->GetLogicalVolume()->GetSolid());
+            G4ThreeVector hallvolTrans = m_hallPhysVol->GetTranslation();
+            std::cout << "HallPhysVol initial position: " << hallvolTrans.x() << " " << hallvolTrans.y() << " " << hallvolTrans.z() << std::endl;
+            
+            G4ThreeVector total_trans = physvolTrans + hallvolTrans;
+            std::cout << "total_trans initial position: " << total_trans.x() << " " << total_trans.y() << " " << total_trans.z() << std::endl;
+            
+            auto DecayVolPhysVol = findDaughterByName(m_FASER2PhysVol, "FASER2DecayVolPhysical");
+            G4Box* DecayVolBoundingBox = dynamic_cast<G4Box*>(DecayVolPhysVol->GetLogicalVolume()->GetSolid());
+            G4ThreeVector dvvolTrans = DecayVolPhysVol->GetTranslation();
+            std::cout << "FASER2DecayVol initial position: " << dvvolTrans.x() << " " << dvvolTrans.y() << " " << dvvolTrans.z() << std::endl;
+            
+            m_global_translation = -total_trans;
+
             Acts::Vector3 acts_translation{m_global_translation.x(), m_global_translation.y(), m_global_translation.z()};
             // Acts::Vector3 acts_translation{m_translation.x(), m_translation.y(), m_translation.z()};
             return acts_translation; //m_rotation * acts_translation;
