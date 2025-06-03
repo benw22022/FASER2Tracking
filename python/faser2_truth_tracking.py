@@ -66,9 +66,10 @@ def runTruthTrackingKalman(
     if inputParticlePath is None:
         addParticleGun(
             s,
-            ParticleConfig(num=2, pdg=acts.PdgParticle.eMuon, randomizeCharge=True),
-            EtaConfig(-1, 1, uniform=True), # Give a bit of variation in eta 
-            MomentumConfig(1.0 * u.GeV, 100.0 * u.GeV, transverse=True),
+            ParticleConfig(num=1, pdg=acts.PdgParticle.eMuon, randomizeCharge=True),
+            # EtaConfig(-0.00001, 0.00001, uniform=True), # Give a bit of variation in eta 
+            EtaConfig(-0.1, 0.1, uniform=True), # Give a bit of variation in eta 
+            MomentumConfig(1 * u.GeV, 1000 * u.GeV, transverse=True),
             PhiConfig(90 * u.degree, 90 * u.degree), # Fire the muons straight along the y axis
             vtxGen=acts.examples.GaussianVertexGenerator(
                 mean=acts.Vector4(0, -4010, 0, 0),
@@ -92,7 +93,7 @@ def runTruthTrackingKalman(
         s.addReader(
             Tracking.RootParticleReader(
                 cfg,
-                # level=acts.logging.DEBUG,
+                level=acts.logging.DEBUG,
             )
         )
         s.addWhiteboardAlias("particles", "particles_generated")
@@ -214,12 +215,12 @@ def runTruthTrackingKalman(
 def get_argparser():
     
     parser = argparse.ArgumentParser()
-    parser.add_argument("--geometry", "-g", type=str, default="share/gdml/FASER2_only.gdml", help = "Path to gdml geometry file")
-    parser.add_argument("--axis", "-a", type=int, default=1, help = "Enum describing the orientation of the detector axis: x=0, y=1, z=2")
-    parser.add_argument("--field", "-f", type=float, default=1, help = "Magnetic field strength in tesla")
-    parser.add_argument("--input_file", "-i", type=str, default=None, help = "Input hits & particle file")
-    parser.add_argument("--nevents", "-n", type=int, default=100, help = "Number of events")
-    parser.add_argument("--nthreads", "-j", type=int, default=-1, help = "Number of threads to use")
+    parser.add_argument("--geometry", "-g", type=str, default="share/gdml/FASER2_only.gdml", help = "Path to gdml geometry file. Default is share/gdml/FASER2_only.gdml (6 tracking stations, SAMUARI-style magnet)")
+    parser.add_argument("--axis", "-a", type=int, default=1, help = "Enum describing the orientation of the detector axis: x=0, y=1, z=2. Default is y-axis (1)")
+    parser.add_argument("--field", "-f", type=float, default=1, help = "Magnetic field strength in tesla. Default is 1 tesla.")
+    parser.add_argument("--input_file", "-i", type=str, default=None, help = "Input hits & particle file. If not provided particle gun will be used")
+    parser.add_argument("--nevents", "-n", type=int, default=100, help = "Number of events to parse from input file or to generate with particle gun")
+    parser.add_argument("--nthreads", "-j", type=int, default=-1, help = "Number of threads to use. Default is -1 which means all available threads will be used. For debugging purposes you can set this to 1 (will make reading the output easier)")
 
     return parser.parse_args()
 
