@@ -172,7 +172,7 @@ void FASER2Geometry::createGeometry() {
 
     // Now we neeed to make the LaryArray from which we can create the tracking volume. 
     Acts::LayerArrayCreator::Config lacConfig;
-    Acts::LayerArrayCreator layArrCreator( lacConfig, Acts::getDefaultLogger("LayerArrayCreator", Acts::Logging::INFO));
+    Acts::LayerArrayCreator layArrCreator(lacConfig, Acts::getDefaultLogger("LayerArrayCreator", Acts::Logging::INFO));
     
     Acts::LayerVector layVec;
     for (unsigned int i = 0; i < nLayers; i++) 
@@ -207,6 +207,7 @@ void FASER2Geometry::createGeometry() {
  * @return std::tuple<std::vector<std::shared_ptr<Acts::Surface>>, std::vector<std::shared_ptr<Acts::Geant4DetectorElement>>>
  * A tuple containing the surfaces and the detector elements
  * TODO: This function can be cleaned up a lot - I think the GEANT4 plugin is unnesessary here, can just extract the G4 Physical Volumes from the GDML
+ * TODO: Only issue is assigning the material to the surfaces 
  */
 std::tuple<std::vector<std::shared_ptr<Acts::Surface>>, std::vector<std::shared_ptr<Acts::Geant4DetectorElement>>> FASER2Geometry::buildGeant4Volumes() {
     
@@ -271,6 +272,12 @@ std::tuple<std::vector<std::shared_ptr<Acts::Surface>>, std::vector<std::shared_
         surfaces.push_back(s);
         elements.push_back(e);
     }
+
+    std::cout << std::endl;
+    for (auto& s : g4SurfaceCache.passiveSurfaces) {
+        std::cout << "Found passive surface: " << s->toString(m_geometryContext) << std::endl;
+    }
+    std::cout << std::endl;
 
     for (const auto& s : surfaces) {
         std::cout << s->toString(m_geometryContext) << std::endl;
