@@ -206,6 +206,7 @@ void FASER2Geometry::createGeometry() {
  * 
  * @return std::tuple<std::vector<std::shared_ptr<Acts::Surface>>, std::vector<std::shared_ptr<Acts::Geant4DetectorElement>>>
  * A tuple containing the surfaces and the detector elements
+ * TODO: This function can be cleaned up a lot - I think the GEANT4 plugin is unnesessary here, can just extract the G4 Physical Volumes from the GDML
  */
 std::tuple<std::vector<std::shared_ptr<Acts::Surface>>, std::vector<std::shared_ptr<Acts::Geant4DetectorElement>>> FASER2Geometry::buildGeant4Volumes() {
     

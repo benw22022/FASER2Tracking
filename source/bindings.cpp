@@ -7,14 +7,14 @@
 #include <Acts/Plugins/Python/Utilities.hpp>
 #include "../include/FASER2Geometry.h"
 #include "../include/RootSimHitReader.h"
-#include "../include/RootParticleReader.hpp"
+#include "../include/RootParticleReader.h"
 
 //// PYBIND11_MAKE_OPAQUE(std::map<long unsigned int, long unsigned int>);
 
 namespace py = pybind11;
 
 PYBIND11_MODULE(Tracking, m) {
-    m.doc() = "Example module created with Pybind11";
+    m.doc() = "Python bindings for running tracking with Acts on the FASER2 detector. Made with Pybind11.";
 
     py::class_<FASER2Geometry>(m, "FASER2Geometry")
         .def(py::init<const std::string&, int>(), py::arg("gdmlFile"), py::arg("axis") = 2)

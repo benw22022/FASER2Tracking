@@ -6,7 +6,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-#include "../include/RootParticleReader.hpp"
+#include "../include/RootParticleReader.h"
 
 #include <Acts/Definitions/PdgParticle.hpp>
 #include <Acts/Utilities/Logger.hpp>
@@ -202,12 +202,10 @@ ActsExamples::ProcessCode RootParticleReader::read(const ActsExamples::Algorithm
       (*m_vz).at(i) * Acts::UnitConstants::mm,
     };
 
-    std::cout << std::endl;
-    std::cout << "Before: Vertex is at " << pos3.x() << " " << pos3.y() << " " << pos3.z() << std::endl;
-    std::cout << "Applying offset of " << m_cfg.offset.x() << " "<< m_cfg.offset.y() << " "<< m_cfg.offset.z() << " to vertex" << std::endl;
+    ACTS_DEBUG("Event: " entry << " Particle: " << i << " Before: Vertex is at " << pos3.x() << " " << pos3.y() << " " << pos3.z());
+    ACTS_DEBUG("Event: " entry << " Particle: " << i << " Applying offset of " << m_cfg.offset.x() << " "<< m_cfg.offset.y() << " "<< m_cfg.offset.z() << " to vertex");
     pos3 = pos3 + m_cfg.offset;
-    std::cout << "After: Vertex is at " << pos3.x() << " " << pos3.y() << " " << pos3.z() << std::endl;
-    std::cout << std::endl;
+    ACTS_DEBUG("Event: " entry << " Particle: " << i << " After: Vertex is at " << pos3.x() << " " << pos3.y() << " " << pos3.z());
 
     pos3 = rotation * pos3;
 
