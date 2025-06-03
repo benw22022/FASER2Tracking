@@ -202,11 +202,11 @@ ActsExamples::ProcessCode RootParticleReader::read(const ActsExamples::Algorithm
       (*m_vz).at(i) * Acts::UnitConstants::mm,
     };
 
-    ACTS_DEBUG("Event: " entry << " Particle: " << i << " Before: Vertex is at " << pos3.x() << " " << pos3.y() << " " << pos3.z());
-    ACTS_DEBUG("Event: " entry << " Particle: " << i << " Applying offset of " << m_cfg.offset.x() << " "<< m_cfg.offset.y() << " "<< m_cfg.offset.z() << " to vertex");
+    ACTS_DEBUG("Event: " << entry << " Particle: " << i << " Before: Vertex is at " << pos3.x() << " " << pos3.y() << " " << pos3.z());
+    ACTS_DEBUG("Event: " << entry << " Particle: " << i << " Applying offset of " << m_cfg.offset.x() << " "<< m_cfg.offset.y() << " "<< m_cfg.offset.z() << " to vertex");
     pos3 = pos3 + m_cfg.offset;
-    ACTS_DEBUG("Event: " entry << " Particle: " << i << " After: Vertex is at " << pos3.x() << " " << pos3.y() << " " << pos3.z());
-
+    ACTS_DEBUG("Event: " << entry << " Particle: " << i << " After: Vertex is at " << pos3.x() << " " << pos3.y() << " " << pos3.z());
+    
     pos3 = rotation * pos3;
 
     initialState.setPosition4(pos3.x(),
