@@ -2,14 +2,14 @@
 
 ## Getting started
 
-Work in progress implementation of ACTS for FASER2 - Expect *extremely* janky code
+Work in progress implementation of ACTS for FASER2 - Expect some janky code
 
 Code provides a python binding of the FASER2 geometry using a GDML file from GEANT4
 
 Code should work on any el9 machine (or in case you want to run this on your laptop, a docker container. A repo for this can be found here [`el9-cvmfs-docker`](https://github.com/benw22022/el9-cvmfs-docker))
 
 To compile the FASER2 geometry do:
-
+ 
 ```bash
 git clone --recursive https://github.com/benw22022/FASER2Tracking.git
 source /cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-gcc11-opt/setup.sh
@@ -31,6 +31,34 @@ To run the truth tracking example do:
 cd build
 python FASER2Tracking/python/faser2_truth_tracking.py
 ```
+
+## `faser2_truth_tracking.py` Options
+
+### Changing the geometry
+
+The `gdml` file can be specified with the `--geometry` (or `-g` option). By default, the code will use the `share/gdml/FASER2_only.gdml` file. This is the baseline SAMURAI magnet geometry with six tracking stations.
+
+*Important note:* The code constructs the geometry by parsing the `gdml` file with GEANT4. The `FASER2Geometry` class is currently hardcoded to find GEANT4 physical volumes with specific names. I plan to make this for flexible, but for the moment the code is unlikely to work with any geometry file except for the one included in this repository.
+
+### Changing the field
+
+The field strength is configurable with the `--field` (`-f`) option. This just changes the absolute strength of the field, the field vector is configured in the code to point in the vertical direction only. The magnetic field is bounded by the magnet window physical volume in the GEANT4 geometry using an `Acts::MultiRangeBField`.
+
+### Setting the input
+
+The output of the [`FPFSim` GEANT4 simulation](https://github.com/benw22022/FPFSim) can be read into Acts if the `/histo/actsHits` macro option is set. In the output file you will find a `hits` tree and `particles` tree. Both trees are necessary for the truth tracking to work. This file can be passed to `faser2_truth_tracking.py` by setting the `--input` (`-i`) option. If this option is not set the default is to use a muon particle gun placed just in front of the first tracking layer. Currently, the particle gun settings are hardcoded. I plan to change this to make it more configurable.
+
+The number of events to process can be set with the `--nevents` (`-n`) option and the number of CPU core to use can be set with the `--nthreads` (`-j`) option.
+
+### Setting the output directory
+
+The location of the output files can be set using the `--output` (`-o`) option (if not set then files are saved to the `cwd`).
+
+### Other settings
+
+The `--axis` (`-a`) setting can be used to change the orientation of the detector. By default, this is set to `1`, the enum corresponding to the y-axis in Acts. This is done so that the seeding works properly (the seeding algorithm assumes a cylindrical geometry). It is not recommended that you change this setting.
+
+The digitization file is not currently configurable and is set to be `share/digitization/FASER2-digitization-smearing-x-z-config.json` which applies a Gaussian smearing to the hit `x` and `z` coordinates.
 
 ## Visualising the geometry
 
