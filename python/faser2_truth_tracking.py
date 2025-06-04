@@ -221,6 +221,7 @@ def get_argparser():
     parser.add_argument("--input_file", "-i", type=str, default=None, help = "Input hits & particle file. If not provided particle gun will be used")
     parser.add_argument("--nevents", "-n", type=int, default=100, help = "Number of events to parse from input file or to generate with particle gun")
     parser.add_argument("--nthreads", "-j", type=int, default=-1, help = "Number of threads to use. Default is -1 which means all available threads will be used. For debugging purposes you can set this to 1 (will make reading the output easier)")
+    parser.add_argument("--output_dir", "-o", type=str, default=Path.cwd(), help = "Output directory for the results. Default is the current working directory.")
 
     return parser.parse_args()
 
@@ -231,6 +232,12 @@ if "__main__" == __name__:
     #* Get script args
     args = get_argparser()
     
+    # Parse output directory
+    output_dir = Path(args.output_dir)
+    if not output_dir.exists():
+        output_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Construct the tracking geometry
     detector = Tracking.FASER2Geometry(args.geometry, axis=args.axis)
     trackingGeometry = detector.getTrackingGeometry()
     
@@ -242,10 +249,10 @@ if "__main__" == __name__:
     
     field = detector.createMagneticField(field_strength_vect)
     
-    offset = detector.getTranslation()
-    translation = offset
-    
-    offset = acts.Vector3(translation[0], translation[1], translation[2])
+    # Get the offset of the detector so that hits and particles are placed correctly
+    # The detector in the Acts representation is recentred so we need to ajust the input hits and particles accordingly
+    translation = detector.getTranslation()    
+    offset = acts.Vector3(translation[0], translation[1], translation[2] - 3100) # The -3100 mm is to account for z-offset of Hall Head position (can't seem to get this from the geometry directly)
     
     print("offset is ", offset)
     
@@ -253,7 +260,7 @@ if "__main__" == __name__:
         trackingGeometry=trackingGeometry,
         field=field,
         digiConfigFile="share/digitization/FASER2-digitization-smearing-x-z-config.json", #TODO: Make digitization respected detector orientation 
-        outputDir=Path.cwd(),
+        outputDir=output_dir,
         inputParticlePath=None if args.input_file is None else Path(args.input_file),
         axisDirection=args.axis,
         inputHitsPath=None if args.input_file is None else Path(args.input_file),
