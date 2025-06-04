@@ -72,7 +72,7 @@ def runTruthTrackingKalman(
             MomentumConfig(1 * u.GeV, 1000 * u.GeV, transverse=True),
             PhiConfig(90 * u.degree, 90 * u.degree), # Fire the muons straight along the y axis
             vtxGen=acts.examples.GaussianVertexGenerator(
-                mean=acts.Vector4(0, -4010, 0, 0),
+                mean=acts.Vector4(0, -4010, 0, 0),  # Place muons just in front of the first tracking station
                 stddev=acts.Vector4(0, 0, 0, 0),
             ),
             multiplicity=1,
@@ -252,7 +252,7 @@ if "__main__" == __name__:
     runTruthTrackingKalman(
         trackingGeometry=trackingGeometry,
         field=field,
-        digiConfigFile="_deps/acts-src/Examples/Algorithms/Digitization/share/default-smearing-config-telescope.json", #TODO: Make digitization respected detector orientation 
+        digiConfigFile="share/digitization/FASER2-digitization-smearing-x-z-config.json", #TODO: Make digitization respected detector orientation 
         outputDir=Path.cwd(),
         inputParticlePath=None if args.input_file is None else Path(args.input_file),
         axisDirection=args.axis,
