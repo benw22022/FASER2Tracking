@@ -48,17 +48,21 @@ The field strength is configurable with the `--field` (`-f`) option. This just c
 
 The output of the [`FPFSim` GEANT4 simulation](https://github.com/benw22022/FPFSim) can be read into Acts if the `/histo/actsHits` macro option is set. In the output file you will find a `hits` tree and `particles` tree. Both trees are necessary for the truth tracking to work. This file can be passed to `faser2_truth_tracking.py` by setting the `--input` (`-i`) option. If this option is not set the default is to use a muon particle gun placed just in front of the first tracking layer. Currently, the particle gun settings are hardcoded. I plan to change this to make it more configurable.
 
+Currently, the `FPFSim` GEANT4 code to produce the compatible files exists only on my fork, a pull request is currently underway to include it in the main `FPFSim` code see [pull request #8](https://github.com/FPFSoftware/FPFSim/pull/8). An example file with compatible format is included in this repository in `share/test_files/dark_photon_14TeV_m0.3548GeV_c1e-06_to_mu_mu.root`.
+
 The number of events to process can be set with the `--nevents` (`-n`) option and the number of CPU core to use can be set with the `--nthreads` (`-j`) option.
 
 ### Setting the output directory
 
 The location of the output files can be set using the `--output` (`-o`) option (if not set then files are saved to the `cwd`).
 
-### Other settings
+### Other settings and design quirks
 
 The `--axis` (`-a`) setting can be used to change the orientation of the detector. By default, this is set to `1`, the enum corresponding to the y-axis in Acts. This is done so that the seeding works properly (the seeding algorithm assumes a cylindrical geometry). It is not recommended that you change this setting.
 
 The digitization file is not currently configurable and is set to be `share/digitization/FASER2-digitization-smearing-x-z-config.json` which applies a Gaussian smearing to the hit `x` and `z` coordinates.
+
+This code has custom root file readers to parse input files from GEANT4. This is allows for seamless rotation and translation of truth particles and hits to map them onto the tracking geometry. *Note:* even after performing the requisite transformation I was still finding that I was having trouble getting hits to sit exactly within tracking planes. To work around this in `RootSimHitReader` I 'snap' the 'z'-position of the hits to the centre of the tracking plane. There is probably some further improvements to be done in the tracking geometry construction to make it line up closer to the Geant4 geometry.
 
 ## Visualising the geometry
 
