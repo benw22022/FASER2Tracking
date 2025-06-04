@@ -314,6 +314,7 @@ std::tuple<std::vector<std::shared_ptr<Acts::Surface>>, std::vector<std::shared_
  * @return std::shared_ptr<const Acts::MagneticFieldProvider> 
  * A shared pointer to the magnetic field provider- in our case a multi-range field. 
  * The magField vector is assigned to the magnet window and the rest of the volume is set to zero
+ * TODO: This only works for the SAMUARI-style magnet - need to generalaise the code to work with Crystal-Puller design
  */
 std::shared_ptr<const Acts::MagneticFieldProvider> FASER2Geometry::createMagneticField(const Acts::Vector3& magField) {
     
@@ -358,10 +359,10 @@ std::shared_ptr<const Acts::MagneticFieldProvider> FASER2Geometry::createMagneti
     minMagnetYoke   *= rotation;
     maxMagnetYoke   *= rotation;
 
-    std::cout << "magnetYoke: min(" << minMagnetWindow.x() << ", " << minMagnetWindow.y() << ", " << minMagnetWindow.z() 
+    std::cout << "MagnetWindow: min(" << minMagnetWindow.x() << ", " << minMagnetWindow.y() << ", " << minMagnetWindow.z() 
             << ") max(" << maxMagnetWindow.x() << ", " << maxMagnetWindow.y() << ", " << maxMagnetWindow.z() << ")" << std::endl;
 
-    std::cout << "MagnetWindow: min(" << minMagnetYoke.x() << ", " << minMagnetYoke.y() << ", " << minMagnetYoke.z() 
+    std::cout << "MagnetYoke: min(" << minMagnetYoke.x() << ", " << minMagnetYoke.y() << ", " << minMagnetYoke.z() 
             << ") max(" << maxMagnetYoke.x() << ", " << maxMagnetYoke.y() << ", " << maxMagnetYoke.z() << ")" << std::endl;
 
             
@@ -376,7 +377,7 @@ std::shared_ptr<const Acts::MagneticFieldProvider> FASER2Geometry::createMagneti
         {minWorld.x(), minWorld.y(), minWorld.z()},
         {maxWorld.x(), maxWorld.y(), maxWorld.z()});
         
-    BFieldRange worldRegion = {worldRange, {0,0,0}};
+    BFieldRange worldRegion = {worldRange, {0,0,0}}; // <- the first arg is the range, the second is the field vector
 
     // Get the field range for the magnet window
     Acts::RangeXD<3, double> magRange = Acts::RangeXD<3, double>(
