@@ -241,7 +241,9 @@ ActsExamples::ProcessCode RootSimHitReader::read(const ActsExamples::AlgorithmCo
       }
 
       // Otherwise - ovewrite the detector axis coord with the centre of the surface in that axis. I hope this is making sense
+      ACTS_DEBUG("Snapped hit to surface. Moved hit by " <<  pos3[the_non_zero_idx] - surfaceCentre[the_non_zero_idx] << " mm");
       pos3[the_non_zero_idx] = surfaceCentre[the_non_zero_idx];
+      
     }
     else
     {
