@@ -182,6 +182,11 @@ ActsExamples::ProcessCode RootParticleReader::read(const ActsExamples::Algorithm
     // particleId.setParticle(i);
     p.setParticleId((*m_particleId).at(i));
 
+    if (m_cfg.filterSecondaries && p.isSecondary())
+    {
+      continue;
+    }
+
     ActsExamples::SimParticleState& initialState = p.initial();
 
     // Now rotate the particles to match the detector axis

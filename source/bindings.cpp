@@ -41,12 +41,13 @@ PYBIND11_MODULE(Tracking, m) {
             );
 
     py::class_<RootParticleReader::Config>(m, "RootParticleReaderConfig", py::module_local())
-        .def(py::init<std::string, std::string, std::string, int, Acts::Vector3>(), 
+        .def(py::init<std::string, std::string, std::string, int, Acts::Vector3, bool>(), 
              py::arg("outputParticles")="particleCollection",
              py::arg("treeName")="particles",
              py::arg("filePath"),
              py::arg("axisDirection")=2,
-             py::arg("offset")=Acts::Vector3(0,0,0)
+             py::arg("offset")=Acts::Vector3(0,0,0),
+             py::arg("discardSecondaries")=false
             );
             // .def_readonly("particleIdMap", &RootParticleReader::Config::particleIdMap);
     
