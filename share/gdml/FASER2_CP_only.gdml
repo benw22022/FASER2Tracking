@@ -262,17 +262,13 @@
     <box lunit="mm" name="vetoShieldBox" x="4000" y="3000" z="100"/>
     <box lunit="mm" name="decayVolBox" x="3000" y="1000" z="10000"/>
     <box lunit="mm" name="TrackerStationBox" x="3000" y="1000" z="10"/>
-    <box lunit="mm" name="MagnetYokeWindow" x="3000" y="1000" z="4000"/>
-    <box lunit="mm" name="MagnetYokeBlock" x="6000" y="3000" z="4000"/>
-    <subtraction name="MagnetYoke">
-      <first ref="MagnetYokeBlock"/>
-      <second ref="MagnetYokeWindow"/>
-    </subtraction>
-    <box lunit="mm" name="ECalBox" x="6000" y="3000" z="1000"/>
-    <box lunit="mm" name="HCalBox" x="6000" y="3000" z="2000"/>
-    <box lunit="mm" name="IronWallBox" x="6000" y="3000" z="3000"/>
-    <box lunit="mm" name="muonTrkLayerBox" x="6000" y="3000" z="10"/>
-    <box lunit="mm" name="FASER2Solid" x="6000" y="3000" z="28190"/>
+    <tube aunit="deg" deltaphi="360" lunit="mm" name="MagnetWindow" rmax="800" rmin="0" startphi="0" z="1250"/>
+    <tube aunit="deg" deltaphi="360" lunit="mm" name="MagnetYoke" rmax="1200" rmin="800" startphi="0" z="1250"/>
+    <box lunit="mm" name="ECalBox" x="6000" y="2000" z="1000"/>
+    <box lunit="mm" name="HCalBox" x="6000" y="2000" z="2000"/>
+    <box lunit="mm" name="IronWallBox" x="6000" y="2000" z="3000"/>
+    <box lunit="mm" name="muonTrkLayerBox" x="6000" y="2000" z="10"/>
+    <box lunit="mm" name="FASER2Solid" x="6000" y="3000" z="28440"/>
     <box lunit="mm" name="hallBox" x="9400" y="7600" z="64600"/>
     <box lunit="mm" name="worldBox" x="30000" y="30000" z="150000"/>
   </solids>
@@ -296,7 +292,7 @@
     </volume>
     <volume name="FASER2MagnetWindowLogical">
       <materialref ref="G4_AIR"/>
-      <solidref ref="MagnetYokeWindow"/>
+      <solidref ref="MagnetWindow"/>
     </volume>
     <volume name="FASER2MagnetYokeLogical">
       <materialref ref="Iron"/>
@@ -323,67 +319,83 @@
       <solidref ref="FASER2Solid"/>
       <physvol name="Veto1ScinPhysical">
         <volumeref ref="VetoScinLogical"/>
-        <position name="Veto1ScinPhysical_pos" unit="mm" x="0" y="0" z="-14090"/>
+        <position name="Veto1ScinPhysical_pos" unit="mm" x="0" y="0" z="-14215"/>
       </physvol>
       <physvol name="VetoShieldPhysical">
         <volumeref ref="VetoShieldLogical"/>
-        <position name="VetoShieldPhysical_pos" unit="mm" x="0" y="0" z="-14035"/>
+        <position name="VetoShieldPhysical_pos" unit="mm" x="0" y="0" z="-14160"/>
       </physvol>
       <physvol name="Veto2ScinPhysical">
         <volumeref ref="VetoScinLogical"/>
-        <position name="Veto2ScinPhysical_pos" unit="mm" x="0" y="0" z="-13980"/>
+        <position name="Veto2ScinPhysical_pos" unit="mm" x="0" y="0" z="-14105"/>
       </physvol>
       <physvol name="FASER2DecayVolPhysical">
         <volumeref ref="FASER2DecayVolLogical"/>
-        <position name="FASER2DecayVolPhysical_pos" unit="mm" x="0" y="0" z="-8975"/>
+        <position name="FASER2DecayVolPhysical_pos" unit="mm" x="0" y="0" z="-9100"/>
       </physvol>
       <physvol name="F2UpstreamTrackerLayer_1Phys">
         <volumeref ref="FASER2TrackerLogical"/>
-        <position name="F2UpstreamTrackerLayer_1Phys_pos" unit="mm" x="0" y="0" z="-3970"/>
+        <position name="F2UpstreamTrackerLayer_1Phys_pos" unit="mm" x="0" y="0" z="-4095"/>
       </physvol>
       <physvol copynumber="1" name="F2UpstreamTrackerLayer_2Phys">
         <volumeref ref="FASER2TrackerLogical"/>
-        <position name="F2UpstreamTrackerLayer_2Phys_pos" unit="mm" x="0" y="0" z="-3460"/>
+        <position name="F2UpstreamTrackerLayer_2Phys_pos" unit="mm" x="0" y="0" z="-3585"/>
       </physvol>
       <physvol copynumber="2" name="F2UpstreamTrackerLayer_3Phys">
         <volumeref ref="FASER2TrackerLogical"/>
-        <position name="F2UpstreamTrackerLayer_3Phys_pos" unit="mm" x="0" y="0" z="-2950"/>
+        <position name="F2UpstreamTrackerLayer_3Phys_pos" unit="mm" x="0" y="0" z="-3075"/>
       </physvol>
       <physvol name="FASER2MagnetWindowPhysical">
         <volumeref ref="FASER2MagnetWindowLogical"/>
-        <position name="FASER2MagnetWindowPhysical_pos" unit="mm" x="0" y="0" z="-445"/>
+        <position name="FASER2MagnetWindowPhysical_pos" unit="mm" x="0" y="0" z="-1945"/>
       </physvol>
       <physvol name="FASER2MagnetYokePhysical">
         <volumeref ref="FASER2MagnetYokeLogical"/>
+        <position name="FASER2MagnetYokePhysical_pos" unit="mm" x="0" y="0" z="-1945"/>
+      </physvol>
+      <physvol copynumber="1" name="FASER2MagnetWindowPhysical">
+        <volumeref ref="FASER2MagnetWindowLogical"/>
+        <position name="FASER2MagnetWindowPhysical_pos" unit="mm" x="0" y="0" z="-445"/>
+      </physvol>
+      <physvol copynumber="1" name="FASER2MagnetYokePhysical">
+        <volumeref ref="FASER2MagnetYokeLogical"/>
         <position name="FASER2MagnetYokePhysical_pos" unit="mm" x="0" y="0" z="-445"/>
+      </physvol>
+      <physvol copynumber="2" name="FASER2MagnetWindowPhysical">
+        <volumeref ref="FASER2MagnetWindowLogical"/>
+        <position name="FASER2MagnetWindowPhysical_pos" unit="mm" x="0" y="0" z="1055"/>
+      </physvol>
+      <physvol copynumber="2" name="FASER2MagnetYokePhysical">
+        <volumeref ref="FASER2MagnetYokeLogical"/>
+        <position name="FASER2MagnetYokePhysical_pos" unit="mm" x="0" y="0" z="1055"/>
       </physvol>
       <physvol copynumber="3" name="F2DownstreamTrackerLayer_1Phys">
         <volumeref ref="FASER2TrackerLogical"/>
-        <position name="F2DownstreamTrackerLayer_1Phys_pos" unit="mm" x="0" y="0" z="5555"/>
+        <position name="F2DownstreamTrackerLayer_1Phys_pos" unit="mm" x="0" y="0" z="5680"/>
       </physvol>
       <physvol copynumber="4" name="F2DownstreamTrackerLayer_2Phys">
         <volumeref ref="FASER2TrackerLogical"/>
-        <position name="F2DownstreamTrackerLayer_2Phys_pos" unit="mm" x="0" y="0" z="6065"/>
+        <position name="F2DownstreamTrackerLayer_2Phys_pos" unit="mm" x="0" y="0" z="6190"/>
       </physvol>
       <physvol copynumber="5" name="F2DownstreamTrackerLayer_3Phys">
         <volumeref ref="FASER2TrackerLogical"/>
-        <position name="F2DownstreamTrackerLayer_3Phys_pos" unit="mm" x="0" y="0" z="6575"/>
+        <position name="F2DownstreamTrackerLayer_3Phys_pos" unit="mm" x="0" y="0" z="6700"/>
       </physvol>
       <physvol name="FASER2ECalPhysical">
         <volumeref ref="FASER2ECAlLogical"/>
-        <position name="FASER2ECalPhysical_pos" unit="mm" x="0" y="0" z="7585"/>
+        <position name="FASER2ECalPhysical_pos" unit="mm" x="0" y="0" z="7710"/>
       </physvol>
       <physvol name="FASER2HCalPhysical">
         <volumeref ref="FASER2HCAlLogical"/>
-        <position name="FASER2HCalPhysical_pos" unit="mm" x="0" y="0" z="9085"/>
+        <position name="FASER2HCalPhysical_pos" unit="mm" x="0" y="0" z="9210"/>
       </physvol>
       <physvol name="FASERIronWallPhysical">
         <volumeref ref="FASER2IronWallLogical"/>
-        <position name="FASERIronWallPhysical_pos" unit="mm" x="0" y="0" z="11585"/>
+        <position name="FASERIronWallPhysical_pos" unit="mm" x="0" y="0" z="11710"/>
       </physvol>
       <physvol name="muonTrkLayerPhys">
         <volumeref ref="muonTrkLayerLogical"/>
-        <position name="muonTrkLayerPhys_pos" unit="mm" x="0" y="0" z="13590"/>
+        <position name="muonTrkLayerPhys_pos" unit="mm" x="0" y="0" z="13715"/>
       </physvol>
     </volume>
     <volume name="hallLV">
@@ -391,7 +403,7 @@
       <solidref ref="hallBox"/>
       <physvol name="FASER2Physical">
         <volumeref ref="FASER2Logical"/>
-        <position name="FASER2Physical_pos" unit="mm" x="-1440" y="-2210" z="13436"/>
+        <position name="FASER2Physical_pos" unit="mm" x="-1440" y="-2210" z="6831"/>
       </physvol>
     </volume>
     <volume name="worldLV">
