@@ -44,6 +44,8 @@ class RootParticleReader : public ActsExamples::IReader {
     int axisDirection = 2;
     // Set vertex offset
     Acts::Vector3 offset = {0,0,0};
+    // Flag to indicate whether or not to filter out secondary particles
+    bool filterSecondaries = false;
     //// Map Geant4 particle ID to Acts Particle ID (FATRAS Barcode)
     //// Should really be a private member of the class but adding additional methods to the python binding is too hard
     //// Making it a member of the config I think is the easiest way to allow the user to read it, but it really shouldn't be modified by the user
