@@ -187,7 +187,8 @@ void FASER2Geometry::createGeometry() {
         Acts::BinningType::arbitrary, m_axisDirection)); // The m_axisDirection tells the LayerArray in which direction to bin the layers - This will orient the detector in the correct direction
     
     // This is the bounding box for the detector - the functions like the world volume in Geant4
-    std::shared_ptr<Acts::VolumeBounds> boundsVol = std::make_shared<Acts::CuboidVolumeBounds>(FASER2BoundingBox->GetXHalfLength()*2 + 5._mm, FASER2BoundingBox->GetYHalfLength()*2 + 5._mm, length + 10._mm);
+    std::shared_ptr<Acts::VolumeBounds> boundsVol = std::make_shared<Acts::CuboidVolumeBounds>(FASER2BoundingBox->GetXHalfLength()*2 + 5._mm, FASER2BoundingBox->GetYHalfLength()*2 + 5._mm, FASER2BoundingBox->GetZHalfLength()*2 + 5._mm);
+    // std::shared_ptr<Acts::VolumeBounds> boundsVol = std::make_shared<Acts::CuboidVolumeBounds>(std::numeric_limits<float>::max(),std::numeric_limits<float>::max(),std::numeric_limits<float>::max());
     
     Acts::Translation3 transVol(offsets[0], offsets[1], (positions.front() + positions.back()) * 0.5);
     Acts::Transform3 trafoVol(m_rotation * transVol);
@@ -199,6 +200,7 @@ void FASER2Geometry::createGeometry() {
             Acts::MutableTrackingVolumeVector{}, "FASER2");
 
     m_trackingGeometry = std::make_unique<Acts::TrackingGeometry>(trackVolume);
+    dumpGeometry("FASER2GeometryDump");
 }
 
 /**
@@ -392,4 +394,44 @@ std::shared_ptr<const Acts::MagneticFieldProvider> FASER2Geometry::createMagneti
     m_magFieldStore.push_back(multiField);
 
     return multiField;
+}
+
+
+void FASER2Geometry::dumpGeometry(const std::string& outputDir) const {
+    // if (!m_trackingGeometry) return;
+
+    // if (debug_) {
+    // std::cout << __PRETTY_FUNCTION__ << std::endl;
+
+    // // for (auto const& surfaceId : layer_surface_map_) {
+    // // std::cout << " " << surfaceId.first << std::endl;
+    // // std::cout << " Check the surface" << std::endl;
+    // // //      surfaceId.second->toStream(gctx, std::cout);
+    // // surfaceId.second->toStream(m_geometryContext);
+    // // std::cout << " GeometryID::" << surfaceId.second->geometryId()
+    // // << std::endl;
+    // // std::cout << " GeometryID::" << surfaceId.second->geometryId().value()
+    // // << std::endl;
+    // // }
+    // }
+
+    // Should fail if already exists
+    // boost::filesystem::create_directory(outputDir);
+    std::filesystem::create_directory(outputDir);
+    // assert(!std::filesystem::create_directory(outputDir));
+
+
+    double outputScalor = 1.0;
+    size_t outputPrecision = 6;
+
+    Acts::ObjVisualization3D objVis(outputPrecision, outputScalor);
+    Acts::ViewConfig containerView = Acts::ViewConfig(true, {220, 220, 220});
+    Acts::ViewConfig volumeView = Acts::ViewConfig(true, {220, 220, 0});
+    Acts::ViewConfig sensitiveView = Acts::ViewConfig(true, {0, 180, 240});
+    Acts::ViewConfig passiveView = Acts::ViewConfig(true, {240, 280, 0});
+    Acts::ViewConfig gridView = Acts::ViewConfig(true, {220, 0, 0});
+
+    Acts::GeometryView3D::drawTrackingVolume(
+    objVis, *(m_trackingGeometry->highestTrackingVolume()), m_geometryContext, containerView,
+    volumeView, passiveView, sensitiveView, gridView, true, "", outputDir);
 }

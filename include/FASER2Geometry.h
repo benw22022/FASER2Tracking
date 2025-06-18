@@ -34,6 +34,7 @@
 #include <memory>
 #include <ostream>
 #include <stdexcept>
+#include <filesystem>
 
 
 // Visualization
@@ -68,6 +69,8 @@ class FASER2Geometry {
         std::shared_ptr<const Acts::MagneticFieldProvider> createMagneticField(const Acts::Vector3& field);
 
         Acts::GeometryContext getGeometryContext() const {return m_geometryContext;};
+        
+        void dumpGeometry(const std::string& outputDir) const;
 
         //TODO: clean this up!
         Acts::Vector3 getTranslation() 
