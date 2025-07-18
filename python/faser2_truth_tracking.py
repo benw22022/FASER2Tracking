@@ -26,6 +26,7 @@ def runTruthTrackingKalman(
     outputDir: Path,
     inputParticlePath: Optional[Path] = None,
     inputHitsPath: Optional[Path] = None,
+    use_fatras: bool = True,
     decorators=[],
     reverseFilteringMomThreshold=0 * u.GeV,
     axisDirection=1,
@@ -89,18 +90,20 @@ def runTruthTrackingKalman(
             outputParticles="particles_generated",
             axisDirection=axisDirection,
             offset=offset,
+            discardSecondaries=use_fatras,  # If we're using fatras for hit reco, then we'll want to discard secondardary particles
         )
         s.addReader(
             Tracking.RootParticleReader(
                 cfg,
                 level=acts.logging.DEBUG,
+                
             )
         )
         s.addWhiteboardAlias("particles", "particles_generated")
         s.addWhiteboardAlias("particles_generated_selected", "particles_generated")
         s.addWhiteboardAlias("particles_simulated_selected", "particles_generated")
 
-    if inputHitsPath is None:
+    if inputHitsPath is None or use_fatras:
         addFatras(
             s,
             trackingGeometry,
@@ -222,7 +225,8 @@ def get_argparser():
     parser.add_argument("--nevents", "-n", type=int, default=100, help = "Number of events to parse from input file or to generate with particle gun")
     parser.add_argument("--nthreads", "-j", type=int, default=-1, help = "Number of threads to use. Default is -1 which means all available threads will be used. For debugging purposes you can set this to 1 (will make reading the output easier)")
     parser.add_argument("--output_dir", "-o", type=str, default=Path.cwd(), help = "Output directory for the results. Default is the current working directory.")
-
+    parser.add_argument("--use_fatras", "-r", action='store_true', default=False, help = "Use Fatras for hit reconstruction. If not set, the input hits will be used directly. Default is False.")
+    
     return parser.parse_args()
 
 
@@ -252,14 +256,14 @@ if "__main__" == __name__:
     # Get the offset of the detector so that hits and particles are placed correctly
     # The detector in the Acts representation is recentred so we need to ajust the input hits and particles accordingly
     translation = detector.getTranslation()    
-    offset = acts.Vector3(translation[0], translation[1], translation[2] - 3100) # The -3100 mm is to account for z-offset of Hall Head position (can't seem to get this from the geometry directly)
+    offset = acts.Vector3(translation[0], translation[1], translation[2]) 
     
     print("offset is ", offset)
     
     runTruthTrackingKalman(
         trackingGeometry=trackingGeometry,
         field=field,
-        digiConfigFile="share/digitization/FASER2-digitization-smearing-x-z-config.json", #TODO: Make digitization respected detector orientation 
+        digiConfigFile="share/digitization/FASER2-digitization-smearing-x-z-config.json", #TODO: Make digitization respected detector orientation
         outputDir=output_dir,
         inputParticlePath=None if args.input_file is None else Path(args.input_file),
         axisDirection=args.axis,
@@ -267,5 +271,6 @@ if "__main__" == __name__:
         nevents=args.nevents,
         nthreads=args.nthreads,
         offset=offset,
+        use_fatras=args.use_fatras,
     ).run()
     
