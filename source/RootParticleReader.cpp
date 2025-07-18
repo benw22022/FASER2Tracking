@@ -184,6 +184,8 @@ ActsExamples::ProcessCode RootParticleReader::read(const ActsExamples::Algorithm
 
     if (m_cfg.filterSecondaries && p.isSecondary())
     {
+      ACTS_DEBUG("Skipping secondary particle with id " << p.particleId()
+                                                       << " in event " << context.eventNumber);
       continue;
     }
 
