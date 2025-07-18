@@ -19,6 +19,8 @@
 #include <cstdint>
 #include <iostream>
 #include <stdexcept>
+#include <random>
+
 
 #include <TChain.h>
 #include <TMathBase.h>
@@ -195,6 +197,16 @@ ActsExamples::ProcessCode RootSimHitReader::read(const ActsExamples::AlgorithmCo
         m_floatColumns.at("ty") * Acts::UnitConstants::mm,
         m_floatColumns.at("tz") * Acts::UnitConstants::mm,
     };
+
+    // Add 250 um smearing in x and y to simulate the digitization
+    // TODO: Make this configurable!
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<double> dist(-250e-3, 250e-3); // we're working in mm, not metres
+    double randomValueX = dist(gen);
+    double randomValueY = dist(gen);
+
+    pos3 = pos3 + Acts::Vector3(randomValueX * Acts::UnitConstants::mm, randomValueY * Acts::UnitConstants::mm, 0 * Acts::UnitConstants::mm);
     pos3 = m_cfg.offset + pos3;
     pos3 = rotation * pos3;
 
@@ -216,7 +228,7 @@ ActsExamples::ProcessCode RootSimHitReader::read(const ActsExamples::AlgorithmCo
       // See if our hit geoid that we constucted can be mapped on our detector
       if (surfaceItr == surfaceByIdentifier.end())
       {
-        ACTS_ERROR("Could not find surface that hit points to. Hit geoId given was" << geoid);
+        ACTS_ERROR("Could not find the surface that this hit points to. Hit geoId given was" << geoid);
         return ActsExamples::ProcessCode::ABORT;
       }
 
